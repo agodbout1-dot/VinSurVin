@@ -1,0 +1,2355 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Vin sur Vin">
+    <meta name="application-name" content="Vin sur Vin">
+    <meta name="theme-color" content="#5C1826">
+    <link id="app-touch-icon" rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 180 180'%3E%3Crect width='180' height='180' rx='40' fill='%235C1826'/%3E%3Ccircle cx='90' cy='90' r='74' fill='none' stroke='%23B39359' stroke-width='2'/%3E%3Ctext x='90' y='108' font-family='Georgia,serif' font-size='64' font-weight='bold' fill='%23FBF9F5' text-anchor='middle'%3EVV%3C/text%3E%3C/svg%3E">
+    <title>Vin sur Vin — Sommelier Personnel IA</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;0,700;1,400;1,600&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        ivory: '#FBF9F5',
+                        offwhite: '#FFFFFF',
+                        sand: '#EAE3D5',
+                        ink: '#171513',
+                        inkmuted: '#6E665F',
+                        bordeaux: '#5C1826',
+                        bordeauxlight: '#7A2234',
+                        gold: '#B39359',
+                        goldlight: '#F4EFE4',
+                        emeraldwine: '#24523A'
+                    },
+                    fontFamily: {
+                        serif: ['"Cormorant Garamond"', 'Georgia', 'serif'],
+                        sans: ['"Plus Jakarta Sans"', '-apple-system', 'BlinkMacSystemFont', 'sans-serif']
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            background-color: #F8F5EF;
+            background-image: radial-gradient(circle at 15% 0%, rgba(179, 147, 89, 0.08), transparent 45%),
+                              radial-gradient(circle at 85% 100%, rgba(92, 24, 38, 0.06), transparent 50%);
+            color: #171513;
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            -webkit-tap-highlight-color: transparent;
+            overflow-x: hidden;
+        }
+        .font-serif {
+            font-family: 'Cormorant Garamond', Georgia, serif;
+        }
+        .editorial-card {
+            background: linear-gradient(180deg, #FFFFFF 0%, #FDFBF8 100%);
+            border: 1px solid rgba(234, 227, 213, 0.95);
+            border-radius: 1.45rem;
+            box-shadow: 0 10px 30px -12px rgba(23, 21, 19, 0.07), 0 1px 0 rgba(255, 255, 255, 0.9) inset;
+            transition: transform 0.22s ease, box-shadow 0.22s ease, border-color 0.22s ease;
+        }
+        .editorial-card:active {
+            transform: scale(0.992);
+        }
+        .luxe-banner {
+            background: linear-gradient(135deg, #4B121E 0%, #681D2D 55%, #3E0F19 100%);
+            border: 1px solid rgba(179, 147, 89, 0.45);
+            border-radius: 1.5rem;
+            box-shadow: 0 16px 36px -14px rgba(75, 18, 30, 0.45);
+        }
+        .gold-hairline {
+            background: linear-gradient(90deg, transparent, rgba(179, 147, 89, 0.55), transparent);
+            height: 1px;
+        }
+        .safe-bottom {
+            padding-bottom: max(0.85rem, env(safe-area-inset-bottom));
+        }
+        .fade-in {
+            animation: fadeIn 0.28s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(8px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col bg-ivory text-ink">
+
+    <!-- En-tête Éditorial Haute-Maison -->
+    <header class="sticky top-0 z-30 bg-[#F8F5EF]/88 backdrop-blur-xl border-b border-sand/75">
+        <div class="max-w-lg mx-auto px-5 py-3.5 flex items-center justify-between">
+            <div onclick="navigateTo('home')" class="cursor-pointer flex items-center gap-3">
+                <div id="header-app-icon" class="w-9 h-9 rounded-full bg-gradient-to-br from-bordeaux to-[#3A0E17] flex items-center justify-center text-goldlight shadow-sm overflow-hidden border border-gold/60 ring-2 ring-gold/15">
+                    <i data-lucide="wine" class="w-4 h-4 text-[#E6CE9E]"></i>
+                </div>
+                <div>
+                    <h1 class="font-serif text-[19px] font-bold tracking-[0.06em] text-ink leading-none">VIN SUR VIN</h1>
+                    <p class="text-[8.5px] uppercase tracking-[0.22em] text-gold font-semibold mt-1">Designed and built by AGO</p>
+                </div>
+            </div>
+            <div class="flex items-center gap-2">
+                <button onclick="exportCellarToExcelCsv()" title="Sauvegarder ma cave en fichier Excel" class="px-3 py-1.5 rounded-full bg-white/90 border border-emerald-200/90 text-emeraldwine text-[10px] font-semibold flex items-center gap-1.5 shadow-2xs hover:bg-emerald-50 transition-all cursor-pointer">
+                    <i data-lucide="file-spreadsheet" class="w-3.5 h-3.5"></i>
+                    <span>Excel</span>
+                </button>
+                <button onclick="openSettingsModal()" aria-label="Configuration API, Excel et Caves" class="p-2 rounded-full border border-sand bg-white/90 text-inkmuted hover:text-bordeaux hover:border-gold transition-all shadow-2xs cursor-pointer">
+                    <i data-lucide="sliders-horizontal" class="w-4 h-4"></i>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Conteneur Principal Mobile-First -->
+    <main id="app-content" class="flex-1 max-w-lg w-full mx-auto px-4 pt-5 pb-32">
+        <!-- Le contenu dynamique est injecté ici -->
+    </main>
+
+    <!-- Inputs Fichiers Cachés (Caméra, Galerie, Import Excel CSV, JSON & Icône) -->
+    <input type="file" id="camera-input" accept="image/*" capture="environment" class="hidden" onchange="handleImageUpload(event)">
+    <input type="file" id="gallery-input" accept="image/*" class="hidden" onchange="handleImageUpload(event)">
+    <input type="file" id="import-excel-input" accept=".csv,text/csv,application/vnd.ms-excel" class="hidden" onchange="handleImportExcelCsv(event)">
+    <input type="file" id="import-json-input" accept="application/json" class="hidden" onchange="handleImportBackup(event)">
+    <input type="file" id="custom-icon-input" accept="image/*" class="hidden" onchange="handleCustomAppIconUpload(event)">
+
+    <!-- Barre de Navigation Inférieure Chic -->
+    <nav class="fixed bottom-0 inset-x-0 z-40 bg-white/92 backdrop-blur-xl border-t border-sand/80 shadow-[0_-8px_24px_-12px_rgba(23,21,19,0.08)] safe-bottom">
+        <div class="max-w-lg mx-auto px-4 py-2 flex items-center justify-around">
+            <button onclick="navigateTo('home')" id="nav-home" class="nav-btn flex flex-col items-center gap-1 py-1.5 px-3 rounded-2xl text-bordeaux transition-all cursor-pointer">
+                <i data-lucide="home" class="w-5 h-5"></i>
+                <span class="text-[10px] font-semibold tracking-wider">Home</span>
+            </button>
+            <button onclick="navigateTo('sommelier-pairing')" id="nav-sommelier-pairing" class="nav-btn flex flex-col items-center gap-1 py-1.5 px-3 rounded-2xl text-inkmuted hover:text-ink transition-all cursor-pointer">
+                <i data-lucide="sparkles" class="w-5 h-5"></i>
+                <span class="text-[10px] font-medium tracking-wider">Conseil</span>
+            </button>
+            <button onclick="navigateTo('history')" id="nav-history" class="nav-btn flex flex-col items-center gap-1 py-1.5 px-3 rounded-2xl text-inkmuted hover:text-ink transition-all cursor-pointer">
+                <i data-lucide="history" class="w-5 h-5"></i>
+                <span class="text-[10px] font-medium tracking-wider">Historique</span>
+            </button>
+            <button onclick="navigateTo('cellar')" id="nav-cellar" class="nav-btn flex flex-col items-center gap-1 py-1.5 px-3 rounded-2xl text-inkmuted hover:text-ink transition-all relative cursor-pointer">
+                <i data-lucide="archive" class="w-5 h-5"></i>
+                <span class="text-[10px] font-medium tracking-wider">Ma Cave</span>
+                <span id="cellar-badge" class="hidden absolute top-0.5 right-1.5 w-4 h-4 rounded-full bg-bordeaux text-ivory text-[9px] font-bold flex items-center justify-center ring-2 ring-white">0</span>
+            </button>
+        </div>
+    </nav>
+
+    <!-- Modale Dynamique -->
+    <div id="modal-backdrop" class="fixed inset-0 z-50 bg-ink/50 backdrop-blur-xs hidden flex items-end sm:items-center justify-center p-0 sm:p-4">
+        <div id="modal-container" class="bg-offwhite w-full max-w-lg rounded-t-3xl sm:rounded-3xl border border-sand max-h-[90vh] overflow-y-auto p-5 sm:p-6 shadow-2xl fade-in">
+            <!-- Contenu modale -->
+        </div>
+    </div>
+
+    <!-- Notification Toast -->
+    <div id="toast-banner" class="fixed top-16 inset-x-0 z-50 flex justify-center px-4 pointer-events-none opacity-0 transition-opacity duration-300">
+        <div id="toast-message" class="bg-ink text-ivory text-xs font-medium px-4 py-2.5 rounded-full shadow-lg border border-gold/40 flex items-center gap-2">
+            <span>Notification</span>
+        </div>
+    </div>
+
+    <script>
+        // ==========================================
+        // 1. ÉTAT GLOBAL & DONNÉES INITIALES
+        // ==========================================
+        const CURRENT_YEAR = 2026;
+        const STORAGE_KEY = 'vin_sur_vin_state_v3';
+
+        const state = {
+            currentView: 'home',
+            selectedWineId: null,
+            apiKey: '',
+            customIconDataUrl: '',
+            caves: [
+                { id: 'cave-1', name: 'Cave Principale — Saint-Cloud', type: 'Cave climatisée', shelves: 8, capacity: 160, temp: 12, humidity: 75 },
+                { id: 'cave-2', name: 'Cave Secondaire — Résidence Sud', type: 'Cave enterrée', shelves: 6, capacity: 120, temp: 13, humidity: 78 }
+            ],
+            wines: [],
+            stockEntries: [],
+            consumedHistory: [],
+            cellarFilterCave: 'all',
+            cellarFilterColor: 'all',
+            cellarSearch: '',
+            sommelierCaveFilter: 'all',
+            sommelierQuery: '',
+            sommelierResults: null,
+            isRecordingVoice: false,
+            isTranscribingVoice: false,
+            activeVoiceRecorder: null,
+            isAskingSommelier: false,
+            isAnalyzingPhoto: false,
+            scanningPreviewUrl: '',
+            expandedHistoryId: null,
+            scanQueue: [],
+            scanQueueIndex: 0
+        };
+
+        function saveState() {
+            try {
+                const payload = {
+                    apiKey: state.apiKey,
+                    customIconDataUrl: state.customIconDataUrl,
+                    caves: state.caves,
+                    wines: state.wines,
+                    stockEntries: state.stockEntries,
+                    consumedHistory: state.consumedHistory
+                };
+                localStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
+                updateCellarBadge();
+            } catch (e) {
+                console.warn('Erreur sauvegarde locale:', e);
+            }
+        }
+
+        function loadState() {
+            try {
+                const raw = localStorage.getItem(STORAGE_KEY);
+                if (raw) {
+                    const parsed = JSON.parse(raw);
+                    if (parsed.apiKey !== undefined) state.apiKey = parsed.apiKey;
+                    if (parsed.customIconDataUrl !== undefined) state.customIconDataUrl = parsed.customIconDataUrl;
+                    if (Array.isArray(parsed.caves) && parsed.caves.length) state.caves = parsed.caves;
+                    if (Array.isArray(parsed.wines)) state.wines = parsed.wines;
+                    if (Array.isArray(parsed.stockEntries)) state.stockEntries = parsed.stockEntries;
+                    if (Array.isArray(parsed.consumedHistory)) state.consumedHistory = parsed.consumedHistory;
+                }
+            } catch (e) {
+                console.warn('Erreur chargement local:', e);
+            }
+        }
+
+        // ==========================================
+        // 2. UTILITAIRES UI, NAVIGATION & MODALES
+        // ==========================================
+        function applyAppIcon() {
+            if (!state.customIconDataUrl) return;
+            const headerIcon = document.getElementById('header-app-icon');
+            if (headerIcon) {
+                headerIcon.innerHTML = `<img src="${state.customIconDataUrl}" alt="Icône" class="w-full h-full object-cover">`;
+            }
+            const touchIcon = document.getElementById('app-touch-icon');
+            if (touchIcon) touchIcon.href = state.customIconDataUrl;
+        }
+
+        function handleCustomAppIconUpload(event) {
+            const file = event.target.files?.[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                state.customIconDataUrl = e.target.result;
+                applyAppIcon();
+                saveState();
+                showToast('Icône personnalisée appliquée');
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function updateCellarBadge() {
+            const badge = document.getElementById('cellar-badge');
+            if (!badge) return;
+            const total = state.stockEntries.reduce((acc, e) => acc + (parseInt(e.qty) || 0), 0);
+            badge.textContent = total;
+            if (total > 0) badge.classList.remove('hidden');
+            else badge.classList.add('hidden');
+        }
+
+        function navigateTo(view, wineId = null) {
+            state.currentView = view;
+            if (wineId) state.selectedWineId = wineId;
+            document.querySelectorAll('.nav-btn').forEach(btn => {
+                btn.classList.remove('text-bordeaux');
+                btn.classList.add('text-inkmuted');
+            });
+            const activeNavId = view === 'wine-detail' ? 'nav-cellar' : `nav-${view}`;
+            const activeBtn = document.getElementById(activeNavId);
+            if (activeBtn) {
+                activeBtn.classList.remove('text-inkmuted');
+                activeBtn.classList.add('text-bordeaux');
+            }
+            renderCurrentView();
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function openModal(htmlContent) {
+            const backdrop = document.getElementById('modal-backdrop');
+            const container = document.getElementById('modal-container');
+            if (!backdrop || !container) return;
+            container.innerHTML = htmlContent;
+            backdrop.classList.remove('hidden');
+            if (window.lucide) lucide.createIcons();
+        }
+
+        function closeModal() {
+            const backdrop = document.getElementById('modal-backdrop');
+            if (backdrop) backdrop.classList.add('hidden');
+        }
+
+        function cancelScanBatch() {
+            state.scanQueue = [];
+            state.scanQueueIndex = 0;
+            window.__pendingScanDraft = null;
+            closeModal();
+        }
+
+        let toastTimer = null;
+        function showToast(message) {
+            const banner = document.getElementById('toast-banner');
+            const msgEl = document.getElementById('toast-message');
+            if (!banner || !msgEl) return;
+            msgEl.innerHTML = `<span>${message}</span>`;
+            banner.classList.remove('opacity-0');
+            clearTimeout(toastTimer);
+            toastTimer = setTimeout(() => banner.classList.add('opacity-0'), 2800);
+        }
+
+        function getStatusBadgeStyle(status) {
+            const s = (status || '').toLowerCase();
+            if (s.includes('apogée')) return 'bg-bordeaux text-ivory';
+            if (s.includes('garder')) return 'bg-goldlight text-bordeaux border border-gold/40';
+            return 'bg-emerald-50 text-emeraldwine border border-emerald-200';
+        }
+
+        function getColorDotHtml(color) {
+            const c = (color || 'Rouge').toLowerCase();
+            if (c.includes('champagne')) return '<span class="inline-block w-2 h-2 rounded-full bg-gold"></span>';
+            if (c.includes('blanc')) return '<span class="inline-block w-2 h-2 rounded-full bg-amber-300"></span>';
+            if (c.includes('ros')) return '<span class="inline-block w-2 h-2 rounded-full bg-rose-300"></span>';
+            return '<span class="inline-block w-2 h-2 rounded-full bg-bordeaux"></span>';
+        }
+
+        function fieldBadge(detectedFields, key, fallbackLabel = 'Auto') {
+            if (detectedFields && detectedFields[key]) {
+                return `<span class="px-1.5 py-0.5 rounded bg-emerald-50 text-emeraldwine border border-emerald-200 text-[9px] font-semibold">Lu</span>`;
+            }
+            return `<span class="px-1.5 py-0.5 rounded bg-ivory text-inkmuted border border-sand text-[9px]">${fallbackLabel}</span>`;
+        }
+
+        // ==========================================
+        // 3. EXPORT & IMPORT EXCEL (.CSV UTF-8 BOM)
+        // ==========================================
+        function escapeCsvCell(val) {
+            const str = String(val ?? '').replace(/"/g, '""');
+            return `"${str}"`;
+        }
+
+        function exportCellarToExcelCsv() {
+            const headers = [
+                'Statut', 'Date Sortie', 'Motif', 'Cave', 'Clayette', 'Quantité',
+                'Domaine / Maison', 'Cuvée', 'Appellation', 'Millésime', 'Couleur / Type',
+                'Prix Achat (€)', 'Cote Estimée (€)', 'Note /100', 'Commentaire / Notes'
+            ];
+            const rows = [headers.map(escapeCsvCell).join(';')];
+
+            state.stockEntries.forEach(entry => {
+                const qty = parseInt(entry.qty) || 0;
+                if (qty <= 0) return;
+                const w = state.wines.find(item => item.id === entry.wineId);
+                const c = state.caves.find(item => item.id === entry.caveId);
+                if (!w) return;
+                rows.push([
+                    'En cave', '', '', c ? c.name : '', entry.shelf || '', qty,
+                    w.producer, w.name, w.appellation, w.vintage, w.color,
+                    entry.purchasePrice || 0, w.price?.average || 0, '', entry.notes || ''
+                ].map(escapeCsvCell).join(';'));
+            });
+
+            (state.consumedHistory || []).forEach(h => {
+                rows.push([
+                    'Sortie de cave', h.date || '', h.reasonType || 'Bue', h.caveName || '', h.shelf || '', h.qty || 1,
+                    h.producer || '', h.name || '', h.appellation || '', h.vintage || '', h.color || '',
+                    h.purchasePrice || 0, h.estimatedPrice || 0, h.score || '', h.comment || h.notes || ''
+                ].map(escapeCsvCell).join(';'));
+            });
+
+            const csvContent = '\uFEFF' + rows.join('\r\n');
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `Cave_Vin_Sur_Vin_${new Date().toISOString().split('T')[0]}.csv`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            showToast('Fichier Excel (.csv) téléchargé');
+        }
+
+        function handleImportExcelCsv(event) {
+            const file = event.target.files?.[0];
+            if (!file) return;
+            event.target.value = '';
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                try {
+                    const text = e.target.result.replace(/^\uFEFF/, '');
+                    const lines = text.split(/\r?\n/).filter(l => l.trim());
+                    if (lines.length < 2) {
+                        showToast('Fichier Excel vide ou invalide');
+                        return;
+                    }
+                    const newWines = [];
+                    const newStock = [];
+                    const newHistory = [];
+
+                    for (let i = 1; i < lines.length; i++) {
+                        const cols = lines[i].split(';').map(c => c.replace(/^"|"$/g, '').replace(/""/g, '"').trim());
+                        if (cols.length < 10) continue;
+                        const [status, exitDate, reasonType, caveName, shelf, qtyStr, producer, name, appellation, vintage, color, buyPriceStr, estPriceStr, scoreStr, notes] = cols;
+                        const qty = parseInt(qtyStr) || 1;
+                        const buyPrice = parseFloat(buyPriceStr) || 0;
+                        const estPrice = parseFloat(estPriceStr) || buyPrice;
+
+                        if (status.toLowerCase().includes('sortie')) {
+                            newHistory.push({
+                                id: 'hist-imp-' + i + '-' + Date.now(),
+                                date: exitDate,
+                                reasonType: reasonType || 'Bue',
+                                caveName,
+                                shelf,
+                                qty,
+                                producer,
+                                name,
+                                appellation,
+                                vintage,
+                                color: color || 'Rouge',
+                                purchasePrice: buyPrice,
+                                estimatedPrice: estPrice,
+                                score: scoreStr ? parseInt(scoreStr) : null,
+                                comment: notes || '',
+                                notes: notes || ''
+                            });
+                        } else {
+                            let cave = state.caves.find(c => c.name === caveName);
+                            if (!cave && caveName) {
+                                cave = { id: 'cave-imp-' + i, name: caveName, type: 'Cave', shelves: 6, capacity: 120, temp: 12, humidity: 75 };
+                                state.caves.push(cave);
+                            }
+                            const wineId = 'wine-imp-' + i + '-' + Date.now();
+                            newWines.push({
+                                id: wineId,
+                                name: name || appellation || 'Cuvée importée',
+                                producer: producer || '',
+                                appellation: appellation || '',
+                                region: '',
+                                country: 'France',
+                                vintage: vintage || 'NV',
+                                color: color || 'Rouge',
+                                grapes: '',
+                                classification: '',
+                                alcohol: '',
+                                imageUrl: 'https://placehold.co/600x800/5C1826/FBF9F5?text=Etiquette',
+                                price: { low: Math.round(estPrice * 0.85), average: estPrice, high: Math.round(estPrice * 1.2) },
+                                maturity: { status: 'Prêt à boire', windowStart: CURRENT_YEAR, peakStart: CURRENT_YEAR, peakEnd: CURRENT_YEAR + 5, windowEnd: CURRENT_YEAR + 8, servingTemp: '16°C', decanting: '' },
+                                pairings: { ideal: { dish: '', reason: '' }, suggestions: [] },
+                                tasting: { aromas: '', structure: '', aiScore: 90 }
+                            });
+                            newStock.push({
+                                id: 'stock-imp-' + i + '-' + Date.now(),
+                                wineId,
+                                caveId: cave ? cave.id : (state.caves[0]?.id || 'cave-1'),
+                                shelf: shelf || 'Clayette 1',
+                                row: '',
+                                qty,
+                                purchaseYear: CURRENT_YEAR,
+                                purchasePrice: buyPrice,
+                                notes: notes || ''
+                            });
+                        }
+                    }
+
+                    state.wines = newWines;
+                    state.stockEntries = newStock;
+                    state.consumedHistory = newHistory;
+                    saveState();
+                    closeModal();
+                    renderCurrentView();
+                    showToast(`${newStock.length} référence(s) importée(s) depuis Excel`);
+                } catch (err) {
+                    showToast('Impossible de lire ce fichier CSV');
+                }
+            };
+            reader.readAsText(file, 'UTF-8');
+        }
+
+        function handleImportBackup(event) {
+            const file = event.target.files?.[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                try {
+                    const parsed = JSON.parse(e.target.result);
+                    if (Array.isArray(parsed.caves)) state.caves = parsed.caves;
+                    if (Array.isArray(parsed.wines)) state.wines = parsed.wines;
+                    if (Array.isArray(parsed.stockEntries)) state.stockEntries = parsed.stockEntries;
+                    if (Array.isArray(parsed.consumedHistory)) state.consumedHistory = parsed.consumedHistory;
+                    saveState();
+                    closeModal();
+                    renderCurrentView();
+                    showToast('Sauvegarde JSON restaurée');
+                } catch (err) {
+                    showToast('Fichier JSON invalide');
+                }
+            };
+            reader.readAsText(file);
+        }
+
+        // ==========================================
+        // 4. VUE 1 : HOME (SCANNER + SYNTHÈSE DES CAVES)
+        // ==========================================
+        function computeCellarBreakdown(entries) {
+            const counts = { total: 0, value: 0, Rouge: 0, Blanc: 0, Rosé: 0, Champagne: 0 };
+            entries.forEach(e => {
+                const q = parseInt(e.qty) || 0;
+                if (q <= 0) return;
+                const w = state.wines.find(item => item.id === e.wineId);
+                if (!w) return;
+                const unitPrice = parseFloat(w.price?.average) || parseFloat(e.purchasePrice) || 0;
+                counts.total += q;
+                counts.value += q * unitPrice;
+                const col = (w.color || 'Rouge').toLowerCase();
+                if (col.includes('champagne')) counts.Champagne += q;
+                else if (col.includes('blanc')) counts.Blanc += q;
+                else if (col.includes('ros')) counts.Rosé += q;
+                else counts.Rouge += q;
+            });
+            return counts;
+        }
+
+        function renderHomeView() {
+            const globalStats = computeCellarBreakdown(state.stockEntries);
+
+            return `
+                <div class="space-y-5 fade-in">
+                    <!-- Carte Scanner d'Étiquette Haute-Maison -->
+                    <section class="editorial-card p-5 space-y-4 relative overflow-hidden">
+                        <div class="flex items-start justify-between gap-3">
+                            <div>
+                                <p class="text-[10px] uppercase tracking-[0.22em] text-gold font-semibold">Vision IA & Recherche Web</p>
+                                <h2 class="font-serif text-[25px] leading-tight font-bold text-ink mt-0.5">Scanner une ou plusieurs bouteilles</h2>
+                                <p class="text-xs text-inkmuted mt-1 leading-relaxed">Analyse vos étiquettes sur une même photo, recherche sur Internet et vous permet de les valider l'une après l'autre.</p>
+                            </div>
+                            <div class="w-11 h-11 rounded-2xl bg-gradient-to-br from-goldlight to-[#EBDDC2] border border-gold/35 text-bordeaux flex items-center justify-center shrink-0 shadow-2xs">
+                                <i data-lucide="scan-line" class="w-5 h-5"></i>
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-2.5">
+                            <button onclick="document.getElementById('camera-input').click()" class="py-3.5 px-4 rounded-2xl bg-gradient-to-r from-bordeaux to-bordeauxlight text-ivory text-xs font-semibold flex items-center justify-center gap-2 shadow-sm hover:opacity-95 transition-all cursor-pointer">
+                                <i data-lucide="camera" class="w-4 h-4 text-[#E6CE9E]"></i>
+                                <span>Prendre photo</span>
+                            </button>
+                            <button onclick="document.getElementById('gallery-input').click()" class="py-3.5 px-4 rounded-2xl bg-[#FAF7F2] border border-sand text-ink text-xs font-semibold flex items-center justify-center gap-2 hover:border-gold transition-all cursor-pointer">
+                                <i data-lucide="image-plus" class="w-4 h-4 text-bordeaux"></i>
+                                <span>Télécharger une photo</span>
+                            </button>
+                        </div>
+
+                        <button onclick="startScanValidationQueue([buildDraftWineFromScan(null, '')], false)" class="w-full py-1.5 text-[11px] text-inkmuted hover:text-bordeaux font-medium flex items-center justify-center gap-1.5 transition-colors cursor-pointer">
+                            <i data-lucide="pen-line" class="w-3.5 h-3.5 text-gold"></i>
+                            <span>Ou saisir manuellement une bouteille</span>
+                        </button>
+                    </section>
+
+                    <!-- Raccourci Conseil Sommelier Édition Prestige -->
+                    <section onclick="navigateTo('sommelier-pairing')" class="luxe-banner p-4.5 p-5 flex items-center justify-between gap-3.5 cursor-pointer hover:opacity-95 transition-all">
+                        <div class="space-y-1">
+                            <p class="text-[9.5px] uppercase tracking-[0.22em] text-[#E6CE9E] font-semibold flex items-center gap-1.5">
+                                <i data-lucide="sparkles" class="w-3 h-3"></i>
+                                <span>Sommelier Privé IA</span>
+                            </p>
+                            <h3 class="font-serif text-xl font-bold text-ivory">Demander conseil au sommelier</h3>
+                            <p class="text-[11px] text-ivory/75">Tapez ou dictez votre plat pour choisir parmi vos ${globalStats.total} flacons.</p>
+                        </div>
+                        <div class="w-11 h-11 rounded-full bg-white/12 border border-gold/50 text-[#E6CE9E] flex items-center justify-center shrink-0 backdrop-blur-xs">
+                            <i data-lucide="mic" class="w-5 h-5"></i>
+                        </div>
+                    </section>
+
+                    <!-- Synthèse des Caves -->
+                    <section class="space-y-3">
+                        <div class="flex items-end justify-between px-1">
+                            <div>
+                                <p class="text-[10px] uppercase tracking-[0.22em] text-gold font-semibold">Patrimoine Viticole</p>
+                                <h2 class="font-serif text-2xl font-bold text-ink">Synthèse des caves</h2>
+                            </div>
+                            <button onclick="navigateTo('cellar')" class="text-xs font-semibold text-bordeaux hover:text-bordeauxlight cursor-pointer">Voir ma cave (${globalStats.total}) →</button>
+                        </div>
+
+                        <!-- Carte Globale -->
+                        <div class="editorial-card p-5 space-y-4">
+                            <div class="flex items-center justify-between pb-3.5 border-b border-sand/80">
+                                <div>
+                                    <p class="text-[10px] uppercase tracking-[0.16em] text-inkmuted font-semibold">Total toutes caves</p>
+                                    <p class="font-serif text-3xl font-bold text-ink mt-0.5">${globalStats.total} <span class="text-base font-normal text-inkmuted">bouteille${globalStats.total > 1 ? 's' : ''}</span></p>
+                                </div>
+                                <div class="text-right">
+                                    <p class="text-[10px] uppercase tracking-[0.16em] text-inkmuted font-semibold">Valeur estimée</p>
+                                    <p class="font-serif text-2xl font-bold text-bordeaux mt-0.5">${Math.round(globalStats.value).toLocaleString('fr-FR')} €</p>
+                                </div>
+                            </div>
+
+                            <div class="grid grid-cols-4 gap-2 text-center">
+                                <div class="p-2.5 rounded-2xl bg-[#FAF7F2] border border-sand/80">
+                                    <span class="inline-block w-2 h-2 rounded-full bg-bordeaux mb-1"></span>
+                                    <p class="font-serif text-lg font-bold text-ink leading-none">${globalStats.Rouge}</p>
+                                    <p class="text-[10px] text-inkmuted mt-1">Rouge</p>
+                                </div>
+                                <div class="p-2.5 rounded-2xl bg-[#FAF7F2] border border-sand/80">
+                                    <span class="inline-block w-2 h-2 rounded-full bg-amber-300 mb-1"></span>
+                                    <p class="font-serif text-lg font-bold text-ink leading-none">${globalStats.Blanc}</p>
+                                    <p class="text-[10px] text-inkmuted mt-1">Blanc</p>
+                                </div>
+                                <div class="p-2.5 rounded-2xl bg-[#FAF7F2] border border-sand/80">
+                                    <span class="inline-block w-2 h-2 rounded-full bg-rose-300 mb-1"></span>
+                                    <p class="font-serif text-lg font-bold text-ink leading-none">${globalStats.Rosé}</p>
+                                    <p class="text-[10px] text-inkmuted mt-1">Rosé</p>
+                                </div>
+                                <div class="p-2.5 rounded-2xl bg-gradient-to-b from-goldlight to-[#EFE5D1] border border-gold/45">
+                                    <span class="inline-block w-2 h-2 rounded-full bg-gold mb-1"></span>
+                                    <p class="font-serif text-lg font-bold text-bordeaux leading-none">${globalStats.Champagne}</p>
+                                    <p class="text-[10px] text-bordeaux font-semibold mt-1">Champagne</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Détail par Cave -->
+                        ${state.caves.map(cave => {
+                            const caveEntries = state.stockEntries.filter(e => e.caveId === cave.id);
+                            const cStats = computeCellarBreakdown(caveEntries);
+                            return `
+                                <div onclick="state.cellarFilterCave='${cave.id}'; navigateTo('cellar');" class="editorial-card p-4 space-y-2.5 cursor-pointer hover:border-gold/80 transition-all">
+                                    <div class="flex items-center justify-between gap-2">
+                                        <div class="min-w-0">
+                                            <h3 class="font-serif text-lg font-bold text-ink truncate">${cave.name}</h3>
+                                            <p class="text-[11px] text-inkmuted">${cave.type} · ${cave.temp}°C</p>
+                                        </div>
+                                        <div class="text-right shrink-0">
+                                            <p class="text-xs font-bold text-ink">${cStats.total} btl</p>
+                                            <p class="text-[11px] font-semibold text-bordeaux">${Math.round(cStats.value).toLocaleString('fr-FR')} €</p>
+                                        </div>
+                                    </div>
+                                    <div class="flex items-center gap-2 flex-wrap pt-1 text-[10px] text-inkmuted">
+                                        <span class="px-2.5 py-0.5 rounded-full bg-[#FAF7F2] border border-sand">Rouge : <strong class="text-ink">${cStats.Rouge}</strong></span>
+                                        <span class="px-2.5 py-0.5 rounded-full bg-[#FAF7F2] border border-sand">Blanc : <strong class="text-ink">${cStats.Blanc}</strong></span>
+                                        <span class="px-2.5 py-0.5 rounded-full bg-[#FAF7F2] border border-sand">Rosé : <strong class="text-ink">${cStats.Rosé}</strong></span>
+                                        <span class="px-2.5 py-0.5 rounded-full bg-goldlight/80 border border-gold/45 text-bordeaux">Champagne : <strong>${cStats.Champagne}</strong></span>
+                                    </div>
+                                </div>
+                            `;
+                        }).join('')}
+                    </section>
+
+                    <!-- Signature Éditoriale -->
+                    <footer class="pt-3 pb-1 text-center space-y-2">
+                        <div class="gold-hairline w-24 mx-auto"></div>
+                        <p class="text-[10px] uppercase tracking-[0.26em] text-inkmuted/80 font-medium">Vin sur Vin · Designed and built by AGO</p>
+                    </footer>
+                </div>
+            `;
+        }
+
+        // ==========================================
+        // 5. VUE 2 : CONSEIL SOMMELIER (ACCORDS METS-VINS)
+        // ==========================================
+        function getSommelierFilteredStock() {
+            return state.stockEntries
+                .filter(e => (parseInt(e.qty) || 0) > 0)
+                .filter(e => state.sommelierCaveFilter === 'all' || e.caveId === state.sommelierCaveFilter)
+                .map(e => {
+                    const wine = state.wines.find(w => w.id === e.wineId);
+                    const cave = state.caves.find(c => c.id === e.caveId);
+                    return wine ? { entry: e, wine, cave } : null;
+                })
+                .filter(Boolean);
+        }
+
+        function renderSommelierPairingView() {
+            const filteredItems = getSommelierFilteredStock();
+            const totalFilteredBottles = filteredItems.reduce((acc, item) => acc + (parseInt(item.entry.qty) || 0), 0);
+
+            return `
+                <div class="space-y-5 fade-in">
+                    <section class="editorial-card p-5 space-y-4">
+                        <div>
+                            <p class="text-[10px] uppercase tracking-[0.2em] text-gold font-semibold">Accords Mets & Vins</p>
+                            <h2 class="font-serif text-2xl font-bold text-ink mt-0.5">Conseil du Sommelier</h2>
+                            <p class="text-xs text-inkmuted mt-1">Sélectionnez la cave puis décrivez ou dictez votre menu : l'IA analyse vos <strong>${totalFilteredBottles} bouteille${totalFilteredBottles > 1 ? 's' : ''}</strong> pour trouver l'accord parfait.</p>
+                        </div>
+
+                        <!-- Sélecteur de Cave -->
+                        <div class="space-y-1.5">
+                            <label class="text-[10px] uppercase tracking-wider font-semibold text-inkmuted block">Cave à explorer</label>
+                            <div class="flex gap-2 overflow-x-auto no-scrollbar pb-0.5">
+                                <button type="button" onclick="state.sommelierCaveFilter='all'; state.sommelierResults=null; renderCurrentView();" class="px-3 py-1.5 rounded-full text-xs font-medium shrink-0 cursor-pointer transition-all ${state.sommelierCaveFilter === 'all' ? 'bg-bordeaux text-ivory shadow-2xs' : 'bg-ivory border border-sand text-inkmuted hover:border-gold'}">Toutes les caves</button>
+                                ${state.caves.map(c => `
+                                    <button type="button" onclick="state.sommelierCaveFilter='${c.id}'; state.sommelierResults=null; renderCurrentView();" class="px-3 py-1.5 rounded-full text-xs font-medium shrink-0 cursor-pointer transition-all ${state.sommelierCaveFilter === c.id ? 'bg-bordeaux text-ivory shadow-2xs' : 'bg-ivory border border-sand text-inkmuted hover:border-gold'}">${c.name}</button>
+                                `).join('')}
+                            </div>
+                        </div>
+
+                        <div class="space-y-2.5">
+                            <textarea id="sommelier-dish-input" oninput="state.sommelierQuery=this.value" rows="3" placeholder="Ex : Magret de canard aux figues, Saint-Jacques snackées, apéritif dînatoire, plateau de fromages..." class="w-full p-3.5 rounded-2xl bg-ivory border border-sand text-xs text-ink focus:outline-none focus:border-bordeaux">${state.sommelierQuery || ''}</textarea>
+                            <div class="flex gap-2">
+                                <button type="button" onclick="toggleVoiceSommelier()" class="px-3.5 py-3 rounded-xl ${state.isRecordingVoice ? 'bg-red-600 text-white border border-red-600 animate-pulse' : 'bg-ivory border border-sand text-bordeaux hover:border-bordeaux'} text-xs font-semibold flex items-center justify-center gap-1.5 cursor-pointer transition-all">
+                                    <i data-lucide="${state.isRecordingVoice ? 'square' : 'mic'}" class="w-4 h-4"></i>
+                                    <span>${state.isTranscribingVoice ? 'Transcription...' : (state.isRecordingVoice ? 'Arrêter' : 'Dicter')}</span>
+                                </button>
+                                <button type="button" onclick="askSommelierAdvice()" class="flex-1 py-3 px-4 rounded-xl bg-gradient-to-r from-bordeaux to-bordeauxlight text-ivory text-xs font-semibold flex items-center justify-center gap-2 hover:opacity-95 shadow-xs cursor-pointer">
+                                    <i data-lucide="sparkles" class="w-4 h-4 text-[#E6CE9E]"></i>
+                                    <span>Trouver l'accord idéal</span>
+                                </button>
+                            </div>
+                        </div>
+                    </section>
+
+                    ${state.isAskingSommelier ? `
+                        <div class="editorial-card p-6 text-center space-y-2">
+                            <div class="w-10 h-10 rounded-full bg-goldlight text-bordeaux flex items-center justify-center mx-auto animate-pulse">
+                                <i data-lucide="wine" class="w-5 h-5"></i>
+                            </div>
+                            <p class="font-serif text-lg font-bold text-ink">Analyse gastronomique de votre cave...</p>
+                            <p class="text-xs text-inkmuted">Étude des cépages, millésimes, fenêtres d'apogée et accords mets-vins.</p>
+                        </div>
+                    ` : ''}
+
+                    ${state.sommelierResults ? `
+                        <section class="space-y-3">
+                            <div class="flex items-center justify-between px-1">
+                                <p class="text-[10px] uppercase tracking-[0.2em] text-gold font-semibold">Sélection du Sommelier</p>
+                                <span class="text-[10px] text-inkmuted">${state.sommelierResults.length} proposition${state.sommelierResults.length > 1 ? 's' : ''}</span>
+                            </div>
+                            ${state.sommelierResults.map((rec, idx) => `
+                                <div onclick="navigateTo('wine-detail', '${rec.wine.id}')" class="editorial-card p-4.5 p-4 space-y-2.5 cursor-pointer hover:border-gold transition-all">
+                                    <div class="flex items-start justify-between gap-2">
+                                        <div class="min-w-0">
+                                            <div class="flex items-center gap-1.5 flex-wrap">
+                                                <span class="px-2.5 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider ${idx === 0 ? 'bg-bordeaux text-ivory' : 'bg-goldlight text-bordeaux border border-gold/40'}">${idx === 0 ? '★ Accord Maître' : `Option ${idx + 1}`}</span>
+                                                <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-ivory border border-sand text-[10px] font-medium text-ink">
+                                                    ${getColorDotHtml(rec.wine.color)}
+                                                    <span>${rec.wine.color || 'Rouge'}</span>
+                                                </span>
+                                                ${rec.caveName ? `<span class="text-[10px] text-inkmuted">· ${rec.caveName}</span>` : ''}
+                                            </div>
+                                            <h3 class="font-serif text-xl font-bold text-ink mt-1.5 leading-snug">${rec.wine.name} (${rec.wine.vintage})</h3>
+                                            <p class="text-xs text-inkmuted">${rec.wine.producer} · ${rec.wine.appellation}</p>
+                                        </div>
+                                        <div class="text-right shrink-0">
+                                            <span class="text-xs font-bold text-bordeaux block">${rec.qty} btl</span>
+                                            <span class="text-[10px] text-inkmuted">${rec.wine.maturity?.servingTemp || '16°C'}</span>
+                                        </div>
+                                    </div>
+                                    <p class="text-xs text-ink leading-relaxed bg-[#FAF7F2] p-3 rounded-xl border border-sand/85">${rec.reason}</p>
+                                </div>
+                            `).join('')}
+                        </section>
+                    ` : ''}
+                </div>
+            `;
+        }
+
+        async function transcribeAudioWithGemini(base64Audio, mimeType) {
+            const effectiveKey = (state.apiKey || '').trim();
+            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent?key=${encodeURIComponent(effectiveKey)}`;
+            const payload = {
+                contents: [{
+                    parts: [
+                        { text: "Transcris fidèlement en français ce message vocal décrivant un plat, un repas ou une demande de conseil vin. Réponds uniquement par le texte transcrit, sans guillemets ni commentaire." },
+                        { inlineData: { mimeType: mimeType || 'audio/webm', data: base64Audio } }
+                    ]
+                }]
+            };
+            const res = await fetch(apiUrl, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+            if (!res.ok) throw new Error('HTTP ' + res.status);
+            const json = await res.json();
+            return (json?.candidates?.[0]?.content?.parts?.[0]?.text || '').trim();
+        }
+
+        async function startMicrophoneFallbackRecording() {
+            if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+                showToast('Microphone inaccessible sur cet appareil');
+                return;
+            }
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                const preferredTypes = ['audio/webm;codecs=opus', 'audio/webm', 'audio/mp4', 'audio/ogg'];
+                const supportedMime = preferredTypes.find(t => window.MediaRecorder && MediaRecorder.isTypeSupported(t)) || '';
+                const recorder = supportedMime ? new MediaRecorder(stream, { mimeType: supportedMime }) : new MediaRecorder(stream);
+                const chunks = [];
+
+                recorder.ondataavailable = (e) => {
+                    if (e.data && e.data.size > 0) chunks.push(e.data);
+                };
+
+                recorder.onstop = async () => {
+                    stream.getTracks().forEach(t => t.stop());
+                    state.isRecordingVoice = false;
+                    state.activeVoiceRecorder = null;
+                    if (!chunks.length) {
+                        renderCurrentView();
+                        return;
+                    }
+                    state.isTranscribingVoice = true;
+                    renderCurrentView();
+
+                    const blob = new Blob(chunks, { type: recorder.mimeType || 'audio/webm' });
+                    const reader = new FileReader();
+                    reader.onloadend = async () => {
+                        try {
+                            const base64Audio = reader.result.split(',')[1];
+                            const transcript = await transcribeAudioWithGemini(base64Audio, blob.type || 'audio/webm');
+                            state.isTranscribingVoice = false;
+                            if (transcript) {
+                                state.sommelierQuery = transcript;
+                                renderCurrentView();
+                                askSommelierAdvice();
+                            } else {
+                                renderCurrentView();
+                                showToast('Aucune parole détectée');
+                            }
+                        } catch (err) {
+                            state.isTranscribingVoice = false;
+                            renderCurrentView();
+                            showToast('Erreur de transcription vocale');
+                        }
+                    };
+                    reader.readAsDataURL(blob);
+                };
+
+                state.activeVoiceRecorder = recorder;
+                state.isRecordingVoice = true;
+                recorder.start();
+                renderCurrentView();
+                showToast('Parlez maintenant, puis appuyez sur Arrêter');
+            } catch (err) {
+                state.isRecordingVoice = false;
+                renderCurrentView();
+                showToast('Autorisez l’accès au micro dans les réglages Safari');
+            }
+        }
+
+        function toggleVoiceSommelier() {
+            if (state.isRecordingVoice && state.activeVoiceRecorder) {
+                try {
+                    state.activeVoiceRecorder.stop();
+                } catch (e) {
+                    state.isRecordingVoice = false;
+                    state.activeVoiceRecorder = null;
+                    renderCurrentView();
+                }
+                return;
+            }
+
+            const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+            if (SpeechRecognition) {
+                try {
+                    const recognition = new SpeechRecognition();
+                    recognition.lang = 'fr-FR';
+                    recognition.interimResults = false;
+                    recognition.maxAlternatives = 1;
+                    let receivedResult = false;
+
+                    state.isRecordingVoice = true;
+                    state.activeVoiceRecorder = recognition;
+                    renderCurrentView();
+
+                    recognition.onresult = (event) => {
+                        receivedResult = true;
+                        const transcript = event.results?.[0]?.[0]?.transcript || '';
+                        state.isRecordingVoice = false;
+                        state.activeVoiceRecorder = null;
+                        if (transcript.trim()) {
+                            state.sommelierQuery = transcript.trim();
+                            renderCurrentView();
+                            askSommelierAdvice();
+                        } else {
+                            renderCurrentView();
+                        }
+                    };
+
+                    recognition.onerror = () => {
+                        state.isRecordingVoice = false;
+                        state.activeVoiceRecorder = null;
+                        if (!receivedResult) {
+                            startMicrophoneFallbackRecording();
+                        } else {
+                            renderCurrentView();
+                        }
+                    };
+
+                    recognition.onend = () => {
+                        state.isRecordingVoice = false;
+                        state.activeVoiceRecorder = null;
+                        renderCurrentView();
+                    };
+
+                    recognition.start();
+                    return;
+                } catch (e) {
+                    state.isRecordingVoice = false;
+                    state.activeVoiceRecorder = null;
+                }
+            }
+
+            startMicrophoneFallbackRecording();
+        }
+
+        async function askSommelierAdvice() {
+            const inputEl = document.getElementById('sommelier-dish-input');
+            const query = (inputEl ? inputEl.value : state.sommelierQuery).trim();
+            if (!query) {
+                showToast('Indiquez votre plat ou votre envie');
+                return;
+            }
+            state.sommelierQuery = query;
+
+            const activeItems = getSommelierFilteredStock();
+            if (activeItems.length === 0) {
+                showToast(state.sommelierCaveFilter === 'all' ? 'Votre cave est actuellement vide' : 'Aucune bouteille dans cette cave');
+                return;
+            }
+
+            state.isAskingSommelier = true;
+            state.sommelierResults = null;
+            renderCurrentView();
+
+            try {
+                const effectiveKey = (state.apiKey || '').trim();
+                const selectedCaveObj = state.caves.find(c => c.id === state.sommelierCaveFilter);
+                const cellarSummary = activeItems.map(i => ({
+                    entryId: i.entry.id,
+                    wineId: i.wine.id,
+                    cave: i.cave ? i.cave.name : '',
+                    qty: i.entry.qty,
+                    name: i.wine.name,
+                    producer: i.wine.producer,
+                    appellation: i.wine.appellation,
+                    region: i.wine.region,
+                    vintage: i.wine.vintage,
+                    color: i.wine.color,
+                    grapes: i.wine.grapes,
+                    classification: i.wine.classification,
+                    estimatedPrice: i.wine.price?.average || i.entry.purchasePrice || 0,
+                    maturityStatus: i.wine.maturity?.status || 'Prêt à boire',
+                    peakWindow: `${i.wine.maturity?.peakStart || CURRENT_YEAR}-${i.wine.maturity?.peakEnd || CURRENT_YEAR + 5}`,
+                    tastingNotes: i.wine.tasting?.aromas || ''
+                }));
+
+                const prompt = `Tu es un Chef Sommelier étoilé français. Analyse finement la demande du client : "${query}".
+${selectedCaveObj ? `Le client souhaite choisir uniquement dans sa cave : "${selectedCaveObj.name}".` : 'Le client cherche dans toutes ses caves.'}
+Voici l'inventaire exact disponible (en année ${CURRENT_YEAR}) :
+${JSON.stringify(cellarSummary)}
+
+Sélectionne les 1 à 3 MEILLEURES bouteilles de cet inventaire en accord gastronomique précis avec la demande (en tenant compte des saveurs, de la cuisson, de la couleur, des cépages, de l'apogée en ${CURRENT_YEAR} et du budget éventuel).
+Réponds UNIQUEMENT par un tableau JSON valide (sans texte autour) :
+[
+  {
+    "entryId": "identifiant exact entryId de la bouteille choisie",
+    "reason": "Explication détaillée, élégante et concrète de pourquoi ce vin (cépages, millésime, structure) sublime ce plat, avec conseil de température/carafage."
+  }
+]`;
+
+                const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent?key=${encodeURIComponent(effectiveKey)}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        contents: [{ parts: [{ text: prompt }] }],
+                        tools: [{ google_search: {} }]
+                    })
+                });
+
+                if (res.ok) {
+                    const json = await res.json();
+                    const rawText = json?.candidates?.[0]?.content?.parts?.map(p => p.text || '').join('\n') || '';
+                    const picks = extractJsonPayloadFromText(rawText);
+                    if (Array.isArray(picks) && picks.length > 0) {
+                        const mapped = picks.map(p => {
+                            const found = activeItems.find(i => i.entry.id === p.entryId || i.wine.id === p.wineId);
+                            return found ? {
+                                wine: found.wine,
+                                qty: found.entry.qty,
+                                caveName: found.cave ? found.cave.name : '',
+                                reason: p.reason
+                            } : null;
+                        }).filter(Boolean);
+
+                        if (mapped.length > 0) {
+                            state.sommelierResults = mapped;
+                            state.isAskingSommelier = false;
+                            renderCurrentView();
+                            return;
+                        }
+                    }
+                }
+            } catch (e) {
+                console.warn('Fallback Sommelier local:', e);
+            }
+
+            // Fallback gastronomique local intelligent si hors-ligne
+            const qLower = query.toLowerCase();
+            const scored = activeItems.map(item => {
+                let score = 0;
+                const col = (item.wine.color || '').toLowerCase();
+                const app = (item.wine.appellation || '').toLowerCase();
+                const grapes = (item.wine.grapes || '').toLowerCase();
+                const status = (item.wine.maturity?.status || '').toLowerCase();
+
+                if (/(apéritif|apéro|champagne|fête|huître|caviar|dessert|foie gras|entrée légère|sushi|tartare)/.test(qLower) && col.includes('champagne')) score += 5;
+                if (/(poisson|saint-jacques|homard|crustacé|fruits de mer|volaille crème|blanquette|chèvre|comté|raclette|fondue|risotto)/.test(qLower) && (col.includes('blanc') || col.includes('champagne'))) score += 4;
+                if (/(viande|bœuf|entrecôte|côte de bœuf|agneau|canard|magret|gibier|sanglier|daube|bourguignon|cassoulet|truffe|barbecue|grillade)/.test(qLower) && col.includes('rouge')) score += 5;
+                if (/(salade|grillade été|tapas|méditerranéen|pizza|paella)/.test(qLower) && col.includes('ros')) score += 4;
+                if (/(syrah|rhône|saint-joseph|côte-rôtie)/.test(qLower) && (grapes.includes('syrah') || app.includes('rhône') || app.includes('saint-joseph'))) score += 4;
+                if (status.includes('apogée')) score += 2;
+                else if (status.includes('prêt')) score += 1;
+
+                return {
+                    wine: item.wine,
+                    qty: item.entry.qty,
+                    caveName: item.cave ? item.cave.name : '',
+                    score,
+                    reason: `Accord conseillé pour « ${query} » : ${item.wine.name} (${item.wine.vintage}, ${item.wine.appellation || item.wine.color}) présente un profil ${item.wine.grapes ? `de ${item.wine.grapes} ` : ''}actuellement ${item.wine.maturity?.status || 'prêt à boire'}. Servir autour de ${item.wine.maturity?.servingTemp || '16°C'}.`
+                };
+            }).sort((a, b) => b.score - a.score).slice(0, 3);
+
+            state.sommelierResults = scored;
+            state.isAskingSommelier = false;
+            renderCurrentView();
+        }
+
+        // ==========================================
+        // 6. VUE 3 : HISTORIQUE DES BOUTEILLES SORTIES
+        // ==========================================
+        function toggleHistoryExpand(id) {
+            state.expandedHistoryId = state.expandedHistoryId === id ? null : id;
+            renderCurrentView();
+        }
+
+        function renderHistoryView() {
+            const list = state.consumedHistory || [];
+            return `
+                <div class="space-y-4 fade-in">
+                    <div class="flex items-end justify-between px-1">
+                        <div>
+                            <p class="text-[10px] uppercase tracking-[0.2em] text-gold font-semibold">Journal de Cave</p>
+                            <h2 class="font-serif text-2xl font-bold text-ink">Historique (${list.length})</h2>
+                        </div>
+                        <button onclick="exportCellarToExcelCsv()" class="px-3 py-1.5 rounded-full bg-emerald-50 border border-emerald-200 text-emeraldwine text-[11px] font-semibold flex items-center gap-1 cursor-pointer">
+                            <i data-lucide="file-spreadsheet" class="w-3.5 h-3.5"></i>
+                            <span>Exporter Excel</span>
+                        </button>
+                    </div>
+
+                    ${list.length === 0 ? `
+                        <div class="editorial-card p-8 text-center space-y-2">
+                            <p class="font-serif text-xl font-bold text-ink">Aucune bouteille sortie</p>
+                            <p class="text-xs text-inkmuted">Dès que vous consommez ou retirez un flacon depuis Ma Cave, il apparaît ici avec sa note et votre commentaire.</p>
+                        </div>
+                    ` : `
+                        <div class="space-y-2.5">
+                            ${list.map(item => {
+                                const isExpanded = state.expandedHistoryId === item.id;
+                                const priceDisplay = Math.round(item.estimatedPrice || item.purchasePrice || 0);
+                                return `
+                                    <div onclick="toggleHistoryExpand('${item.id}')" class="editorial-card p-4 space-y-2 cursor-pointer hover:border-bordeaux/50 transition-colors">
+                                        <div class="flex items-center justify-between gap-3">
+                                            <div class="min-w-0">
+                                                <div class="flex items-center gap-1.5 flex-wrap">
+                                                    <h3 class="font-serif text-lg font-bold text-ink truncate">${item.name || item.appellation} ${item.vintage ? `(${item.vintage})` : ''}</h3>
+                                                    ${item.reasonType === 'Autre' ? `<span class="px-2 py-0.5 rounded-full bg-sand/70 text-inkmuted text-[9px] font-semibold">Autre</span>` : ''}
+                                                </div>
+                                                <p class="text-[11px] text-inkmuted">${item.color || 'Rouge'} · ${item.producer || ''}</p>
+                                            </div>
+                                            <div class="text-right shrink-0 flex items-center gap-2.5">
+                                                <div>
+                                                    <p class="text-xs font-bold text-ink">${priceDisplay} €</p>
+                                                    <p class="text-[10px] font-semibold text-bordeaux">${item.score ? `${item.score}/100` : 'Sans note'}</p>
+                                                </div>
+                                                <i data-lucide="${isExpanded ? 'chevron-up' : 'chevron-down'}" class="w-4 h-4 text-inkmuted"></i>
+                                            </div>
+                                        </div>
+
+                                        ${isExpanded ? `
+                                            <div class="pt-2.5 mt-1 border-t border-sand/70 text-xs space-y-1.5 text-inkmuted">
+                                                <p><strong class="text-ink">Date de sortie :</strong> ${item.date || 'Non précisée'} (${item.reasonType === 'Autre' ? 'Autre sortie' : 'Bue / Dégustée'})</p>
+                                                ${item.occasion ? `<p><strong class="text-ink">Occasion :</strong> ${item.occasion}</p>` : ''}
+                                                <p class="text-ink bg-ivory p-2.5 rounded-xl border border-sand/80">${item.comment ? item.comment : 'Aucun commentaire laissé pour cette bouteille.'}</p>
+                                            </div>
+                                        ` : ''}
+                                    </div>
+                                `;
+                            }).join('')}
+                        </div>
+                    `}
+                </div>
+            `;
+        }
+
+        // ==========================================
+        // 7. VUE 4 : MA CAVE (INVENTAIRE & GESTION)
+        // ==========================================
+        function renderCellarView() {
+            const activeEntries = state.stockEntries.filter(e => (parseInt(e.qty) || 0) > 0);
+            const filtered = activeEntries.filter(entry => {
+                const w = state.wines.find(item => item.id === entry.wineId);
+                if (!w) return false;
+                if (state.cellarFilterCave !== 'all' && entry.caveId !== state.cellarFilterCave) return false;
+                if (state.cellarFilterColor !== 'all' && (w.color || '').toLowerCase() !== state.cellarFilterColor.toLowerCase()) return false;
+                if (state.cellarSearch) {
+                    const q = state.cellarSearch.toLowerCase();
+                    const hay = `${w.name} ${w.producer} ${w.appellation} ${w.vintage} ${w.color}`.toLowerCase();
+                    if (!hay.includes(q)) return false;
+                }
+                return true;
+            });
+
+            const totalVisibleBottles = filtered.reduce((acc, e) => acc + (parseInt(e.qty) || 0), 0);
+
+            return `
+                <div class="space-y-4 fade-in">
+                    <div class="flex items-end justify-between px-1">
+                        <div>
+                            <p class="text-[10px] uppercase tracking-[0.2em] text-gold font-semibold">Livre de Cave</p>
+                            <h2 class="font-serif text-2xl font-bold text-ink">Ma Cave (${totalVisibleBottles})</h2>
+                        </div>
+                        <button onclick="openAddCaveModal()" class="px-3 py-1.5 rounded-full bg-offwhite border border-sand text-ink text-xs font-semibold hover:border-bordeaux cursor-pointer">+ Cave</button>
+                    </div>
+
+                    <div class="relative">
+                        <i data-lucide="search" class="w-4 h-4 text-inkmuted absolute left-3.5 top-3"></i>
+                        <input type="text" value="${state.cellarSearch}" oninput="state.cellarSearch=this.value; renderCurrentView();" placeholder="Rechercher un domaine, une cuvée, un millésime..." class="w-full pl-10 pr-4 py-2.5 rounded-2xl bg-offwhite border border-sand text-xs text-ink focus:outline-none focus:border-bordeaux">
+                    </div>
+
+                    <!-- Filtre par Cave -->
+                    <div class="flex gap-2 overflow-x-auto no-scrollbar pb-1">
+                        <button onclick="state.cellarFilterCave='all'; renderCurrentView();" class="px-3 py-1.5 rounded-full text-xs font-medium shrink-0 cursor-pointer ${state.cellarFilterCave === 'all' ? 'bg-bordeaux text-ivory' : 'bg-offwhite border border-sand text-inkmuted'}">Toutes les caves</button>
+                        ${state.caves.map(c => `
+                            <button onclick="state.cellarFilterCave='${c.id}'; renderCurrentView();" class="px-3 py-1.5 rounded-full text-xs font-medium shrink-0 cursor-pointer ${state.cellarFilterCave === c.id ? 'bg-bordeaux text-ivory' : 'bg-offwhite border border-sand text-inkmuted'}">${c.name}</button>
+                        `).join('')}
+                    </div>
+
+                    <!-- Filtre par Couleur / Type -->
+                    <div class="flex gap-1.5 overflow-x-auto no-scrollbar pb-1">
+                        ${['all', 'Rouge', 'Blanc', 'Rosé', 'Champagne'].map(col => `
+                            <button onclick="state.cellarFilterColor='${col}'; renderCurrentView();" class="px-3 py-1 rounded-full text-[11px] font-medium shrink-0 cursor-pointer ${state.cellarFilterColor === col ? 'bg-gold text-white' : 'bg-offwhite border border-sand text-inkmuted'}">${col === 'all' ? 'Toutes couleurs' : col}</button>
+                        `).join('')}
+                    </div>
+
+                    ${filtered.length === 0 ? `
+                        <div class="editorial-card p-8 text-center space-y-2">
+                            <p class="font-serif text-xl font-bold text-ink">Aucune bouteille trouvée</p>
+                            <p class="text-xs text-inkmuted">Scannez une étiquette depuis l'accueil ou modifiez vos filtres.</p>
+                        </div>
+                    ` : `
+                        <div class="space-y-3">
+                            ${filtered.map(entry => {
+                                const w = state.wines.find(item => item.id === entry.wineId);
+                                const c = state.caves.find(item => item.id === entry.caveId);
+                                const wineColor = w.color || 'Rouge';
+                                return `
+                                    <div class="editorial-card p-4 space-y-3">
+                                        <div onclick="navigateTo('wine-detail', '${w.id}')" class="flex items-start justify-between gap-3 cursor-pointer">
+                                            <div class="min-w-0">
+                                                <p class="text-[10px] uppercase tracking-wider text-bordeaux font-semibold">${w.appellation || wineColor} · ${w.vintage}</p>
+                                                <h3 class="font-serif text-xl font-bold text-ink truncate">${w.name}</h3>
+                                                <p class="text-xs text-inkmuted truncate">${w.producer}</p>
+                                                <div class="flex items-center gap-1.5 mt-1.5 flex-wrap">
+                                                    <span class="text-[11px] text-inkmuted">${c ? c.name : ''}</span>
+                                                    <span class="text-[11px] text-inkmuted">·</span>
+                                                    <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-ivory border border-sand text-[10px] font-semibold text-ink">
+                                                        ${getColorDotHtml(wineColor)}
+                                                        <span>${wineColor}</span>
+                                                    </span>
+                                                </div>
+                                            </div>
+                                            <div class="text-right shrink-0">
+                                                <span class="inline-block px-2.5 py-1 rounded-full text-[10px] font-semibold ${getStatusBadgeStyle(w.maturity?.status)}">${w.maturity?.status || 'Prêt à boire'}</span>
+                                                <p class="text-xs font-bold text-ink mt-1.5">${w.price?.average || entry.purchasePrice || 0} € <span class="font-normal text-inkmuted">/ btl</span></p>
+                                            </div>
+                                        </div>
+
+                                        <div class="flex items-center justify-between pt-2.5 border-t border-sand/70">
+                                            <span class="text-xs font-bold text-ink">Stock : ${entry.qty} bouteille${entry.qty > 1 ? 's' : ''}</span>
+                                            <div class="flex items-center gap-2">
+                                                <button onclick="adjustStockQty('${entry.id}', -1)" class="px-3 py-1.5 rounded-xl bg-bordeaux text-ivory text-xs font-semibold hover:bg-bordeauxlight cursor-pointer">-1 Boire</button>
+                                                <button onclick="adjustStockQty('${entry.id}', 1)" class="px-2.5 py-1.5 rounded-xl bg-ivory border border-sand text-ink text-xs font-bold hover:border-bordeaux cursor-pointer">+1</button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                `;
+                            }).join('')}
+                        </div>
+                    `}
+                </div>
+            `;
+        }
+
+        // ==========================================
+        // 8. VUE 5 : FICHE DÉTAILLÉE D'UN VIN
+        // ==========================================
+        function renderWineDetailView() {
+            const w = state.wines.find(item => item.id === state.selectedWineId);
+            if (!w) return renderCellarView();
+
+            const entries = state.stockEntries.filter(e => e.wineId === w.id && (parseInt(e.qty) || 0) > 0);
+            const totalQty = entries.reduce((acc, e) => acc + (parseInt(e.qty) || 0), 0);
+            const wineColor = w.color || 'Rouge';
+
+            return `
+                <div class="space-y-4 fade-in">
+                    <div class="flex items-center justify-between">
+                        <button onclick="navigateTo('cellar')" class="px-3 py-1.5 rounded-full bg-offwhite border border-sand text-xs font-medium text-ink flex items-center gap-1 cursor-pointer">
+                            <i data-lucide="arrow-left" class="w-3.5 h-3.5"></i>
+                            <span>Ma Cave</span>
+                        </button>
+                        <button onclick="deleteWineCompletely('${w.id}')" class="px-3 py-1.5 rounded-full bg-red-50 border border-red-200 text-red-700 text-xs font-medium cursor-pointer">Retirer du stock</button>
+                    </div>
+
+                    <div class="editorial-card p-5 space-y-4">
+                        <div class="flex gap-4 items-start">
+                            <img src="${w.imageUrl}" onerror="this.src='https://placehold.co/200x260/5C1826/FBF9F5?text=Vin'" alt="${w.name}" class="w-20 h-28 object-cover rounded-2xl border border-sand shrink-0">
+                            <div class="space-y-1 min-w-0">
+                                <p class="text-[10px] uppercase tracking-wider text-bordeaux font-bold">${w.appellation} · ${w.vintage}</p>
+                                <h2 class="font-serif text-2xl font-bold text-ink leading-tight">${w.name}</h2>
+                                <p class="text-xs font-medium text-inkmuted">${w.producer}</p>
+                                <div class="pt-1 flex flex-wrap gap-1.5">
+                                    <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-ivory border border-sand text-[10px] font-semibold text-ink">
+                                        ${getColorDotHtml(wineColor)}
+                                        <span>${wineColor}</span>
+                                    </span>
+                                    ${w.grapes ? `<span class="px-2 py-0.5 rounded-full bg-ivory border border-sand text-[10px] text-inkmuted">${w.grapes}</span>` : ''}
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-3 gap-2 pt-3 border-t border-sand/80 text-center">
+                            <div class="p-2 rounded-xl bg-ivory">
+                                <p class="text-[9px] uppercase text-inkmuted font-semibold">Cote estimée</p>
+                                <p class="font-serif text-lg font-bold text-bordeaux">${w.price?.average || 0} €</p>
+                            </div>
+                            <div class="p-2 rounded-xl bg-ivory">
+                                <p class="text-[9px] uppercase text-inkmuted font-semibold">Apogée</p>
+                                <p class="font-serif text-sm font-bold text-ink mt-0.5">${w.maturity?.peakStart || CURRENT_YEAR}–${w.maturity?.peakEnd || CURRENT_YEAR + 5}</p>
+                            </div>
+                            <div class="p-2 rounded-xl bg-ivory">
+                                <p class="text-[9px] uppercase text-inkmuted font-semibold">En cave</p>
+                                <p class="font-serif text-lg font-bold text-ink">${totalQty} btl</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="editorial-card p-5 space-y-3 text-xs">
+                        <h3 class="font-serif text-lg font-bold text-ink">Dégustation & Service</h3>
+                        <p><strong class="text-ink">Arômes :</strong> <span class="text-inkmuted">${w.tasting?.aromas || 'Non renseigné'}</span></p>
+                        <p><strong class="text-ink">Bouche :</strong> <span class="text-inkmuted">${w.tasting?.structure || 'Non renseigné'}</span></p>
+                        <p><strong class="text-ink">Température :</strong> <span class="text-inkmuted">${w.maturity?.servingTemp || '16°C'} — ${w.maturity?.decanting || ''}</span></p>
+                        <p><strong class="text-ink">Accord idéal :</strong> <span class="text-inkmuted">${w.pairings?.ideal?.dish || ''}</span></p>
+                    </div>
+
+                    <div class="editorial-card p-5 space-y-3">
+                        <div class="flex items-center justify-between">
+                            <h3 class="font-serif text-lg font-bold text-ink">Emplacements en cave</h3>
+                            <button onclick="openAddToCaveModal('${w.id}')" class="text-xs font-semibold text-bordeaux cursor-pointer">+ Ajouter lot</button>
+                        </div>
+                        ${entries.map(entry => {
+                            const c = state.caves.find(item => item.id === entry.caveId);
+                            return `
+                                <div class="flex items-center justify-between p-3 rounded-xl bg-ivory border border-sand text-xs">
+                                    <div>
+                                        <p class="font-semibold text-ink">${c ? c.name : 'Cave'}</p>
+                                        <p class="text-[11px] text-inkmuted flex items-center gap-1.5 mt-0.5">
+                                            ${getColorDotHtml(wineColor)}
+                                            <span>${wineColor}</span>
+                                            <span>· ${entry.qty} btl</span>
+                                        </p>
+                                    </div>
+                                    <div class="flex items-center gap-1.5">
+                                        <button onclick="adjustStockQty('${entry.id}', -1)" class="px-2.5 py-1 rounded-lg bg-bordeaux text-ivory font-semibold cursor-pointer">-1 Boire</button>
+                                        <button onclick="adjustStockQty('${entry.id}', 1)" class="px-2 py-1 rounded-lg bg-offwhite border border-sand font-bold cursor-pointer">+1</button>
+                                    </div>
+                                </div>
+                            `;
+                        }).join('')}
+                    </div>
+                </div>
+            `;
+        }
+
+        // ==========================================
+        // 9. SCAN MULTI-BOUTEILLES, RECHERCHE WEB & VALIDATION SÉQUENTIELLE
+        // ==========================================
+        function buildDraftWineFromScan(analyzed, imageUrl, indexSuffix = 0) {
+            const avgEst = parseFloat(analyzed?.price?.average) || 38;
+            const detectedFields = analyzed?.detectedFields || {};
+            return {
+                id: 'wine-scan-' + Date.now() + '-' + indexSuffix,
+                name: (analyzed?.name || '').trim(),
+                producer: (analyzed?.producer || '').trim(),
+                appellation: (analyzed?.appellation || '').trim(),
+                region: (analyzed?.region || '').trim(),
+                country: (analyzed?.country || 'France').trim(),
+                vintage: String(analyzed?.vintage || 'NV').trim(),
+                color: analyzed?.color || 'Rouge',
+                grapes: (analyzed?.grapes || '').trim(),
+                classification: (analyzed?.classification || '').trim(),
+                alcohol: (analyzed?.alcohol || '').trim(),
+                detectedQty: Math.max(1, parseInt(analyzed?.detectedQty) || 1),
+                imageUrl: imageUrl || 'https://placehold.co/600x800/5C1826/FBF9F5?text=Etiquette',
+                confidence: analyzed ? (analyzed._sourceLabel || 'Analyse automatique') : 'Saisie manuelle',
+                detectedFields,
+                price: {
+                    low: parseFloat(analyzed?.price?.low) || Math.round(avgEst * 0.85),
+                    average: avgEst,
+                    high: parseFloat(analyzed?.price?.high) || Math.round(avgEst * 1.2),
+                    cellarPremium: analyzed?.price?.cellarPremium || 'Conservation en cave',
+                    sources: analyzed?.price?.sources || 'Estimation Sommelier IA',
+                    date: 'Novembre 2026',
+                    reliability: analyzed ? 'Élevée' : 'Personnalisée'
+                },
+                maturity: {
+                    status: analyzed?.maturity?.status || 'Prêt à boire',
+                    windowStart: parseInt(analyzed?.maturity?.windowStart) || CURRENT_YEAR,
+                    peakStart: parseInt(analyzed?.maturity?.peakStart) || CURRENT_YEAR,
+                    peakEnd: parseInt(analyzed?.maturity?.peakEnd) || (CURRENT_YEAR + 5),
+                    windowEnd: parseInt(analyzed?.maturity?.windowEnd) || (CURRENT_YEAR + 8),
+                    remainingPotential: analyzed?.maturity?.remainingPotential || '5 à 8 ans',
+                    idealMoment: analyzed?.maturity?.idealMoment || 'À déguster à maturité',
+                    servingTemp: analyzed?.maturity?.servingTemp || (analyzed?.color === 'Champagne' ? '8–10°C' : (analyzed?.color === 'Blanc' ? '10–12°C' : '16–17°C')),
+                    decanting: analyzed?.maturity?.decanting || (analyzed?.color === 'Champagne' ? 'Service direct en flûte tulipe' : 'Aérer 30 min avant service')
+                },
+                pairings: analyzed?.pairings || {
+                    ideal: { dish: 'Accord gastronomique sur mesure', reason: 'Sélectionné selon le profil aromatique de la cuvée.' },
+                    suggestions: ['Volaille rôtie', 'Fromages affinés']
+                },
+                tasting: analyzed?.tasting || {
+                    aromas: 'Notes fruitées et florales élégantes',
+                    structure: 'Équilibrée et persistante',
+                    aiScore: 90
+                },
+                history: analyzed?.history || {
+                    domainStory: '',
+                    terroir: ''
+                }
+            };
+        }
+
+        function parseWineMetadataFromOcrText(rawText, avgR, avgG, avgB) {
+            const cleanText = (rawText || '').replace(/\s+/g, ' ').trim();
+            const lines = (rawText || '')
+                .split(/\r?\n/)
+                .map(l => l.replace(/[^a-zA-ZÀ-ÿ0-9'’&.\-\s°%]/g, '').trim())
+                .filter(l => l.length >= 3);
+
+            const vintageMatch = cleanText.match(/\b(19[5-9]\d|20[0-2]\d)\b/);
+            const vintage = vintageMatch ? vintageMatch[1] : '';
+
+            const alcoholMatch = cleanText.match(/\b(1[0-6](?:[.,]\d)?)\s*%/);
+            const alcohol = alcoholMatch ? alcoholMatch[1].replace(',', '.') + '%' : '';
+
+            const appellationRules = [
+                { pattern: /sain[t]?\s*[\-\s]?\s*jo(?:seph|rph|sph|eph)/i, appellation: 'Saint-Joseph AOC', region: 'Vallée du Rhône', grapes: '100% Syrah', color: 'Rouge', price: 32 },
+                { pattern: /c[ôo]te[\s-]?r[ôo]tie/i, appellation: 'Côte-Rôtie AOC', region: 'Vallée du Rhône', grapes: 'Syrah, Viognier', color: 'Rouge', price: 78 },
+                { pattern: /hermitage|crozes[\s-]?hermitage/i, appellation: 'Crozes-Hermitage / Hermitage AOC', region: 'Vallée du Rhône', grapes: 'Syrah', color: 'Rouge', price: 42 },
+                { pattern: /ch[âa]teauneuf[\s-]?du[\s-]?pape/i, appellation: 'Châteauneuf-du-Pape AOC', region: 'Vallée du Rhône', grapes: 'Grenache, Syrah, Mourvèdre', color: 'Rouge', price: 55 },
+                { pattern: /c[ôo]tes\s+du\s+rh[ôo]ne/i, appellation: 'Côtes du Rhône AOC', region: 'Vallée du Rhône', grapes: 'Grenache, Syrah', color: 'Rouge', price: 22 },
+                { pattern: /champagne/i, appellation: 'Champagne AOC', region: 'Champagne', grapes: 'Chardonnay, Pinot Noir, Meunier', color: 'Champagne', price: 58 },
+                { pattern: /margaux/i, appellation: 'Margaux AOC', region: 'Bordeaux', grapes: 'Cabernet Sauvignon, Merlot', color: 'Rouge', price: 75 },
+                { pattern: /pauillac/i, appellation: 'Pauillac AOC', region: 'Bordeaux', grapes: 'Cabernet Sauvignon, Merlot', color: 'Rouge', price: 85 },
+                { pattern: /saint[\s-]?[ée]milion/i, appellation: 'Saint-Émilion Grand Cru AOC', region: 'Bordeaux', grapes: 'Merlot, Cabernet Franc', color: 'Rouge', price: 52 },
+                { pattern: /pessac[\s-]?l[ée]ognan/i, appellation: 'Pessac-Léognan AOC', region: 'Bordeaux', grapes: 'Cabernet Sauvignon, Merlot', color: 'Rouge', price: 58 },
+                { pattern: /gevrey[\s-]?chambertin/i, appellation: 'Gevrey-Chambertin AOC', region: 'Bourgogne', grapes: '100% Pinot Noir', color: 'Rouge', price: 75 },
+                { pattern: /meursault/i, appellation: 'Meursault AOC', region: 'Bourgogne', grapes: '100% Chardonnay', color: 'Blanc', price: 72 },
+                { pattern: /chablis/i, appellation: 'Chablis AOC', region: 'Bourgogne', grapes: '100% Chardonnay', color: 'Blanc', price: 34 },
+                { pattern: /puligny[\s-]?montrachet|chassagne[\s-]?montrachet/i, appellation: 'Montrachet AOC', region: 'Bourgogne', grapes: '100% Chardonnay', color: 'Blanc', price: 95 },
+                { pattern: /sancerre/i, appellation: 'Sancerre AOC', region: 'Vallée de la Loire', grapes: '100% Sauvignon Blanc', color: 'Blanc', price: 28 },
+                { pattern: /bandol/i, appellation: 'Bandol AOC', region: 'Provence', grapes: 'Mourvèdre, Grenache', color: 'Rouge', price: 42 },
+                { pattern: /c[ôo]tes de provence/i, appellation: 'Côtes de Provence AOC', region: 'Provence', grapes: 'Grenache, Cinsault, Syrah', color: 'Rosé', price: 22 }
+            ];
+
+            let matchedRule = appellationRules.find(r => r.pattern.test(cleanText)) || null;
+            if (!matchedRule) {
+                const aocLine = lines.find(l => /(appellation|aoc|aop|cru des)/i.test(l));
+                if (aocLine) {
+                    matchedRule = {
+                        appellation: aocLine.replace(/^[^a-zA-ZÀ-ÿ]+/, '').trim(),
+                        region: /rh[ôo]ne/i.test(cleanText) ? 'Vallée du Rhône' : 'France',
+                        grapes: '',
+                        color: /champagne|brut|cr[ée]mant/i.test(cleanText) ? 'Champagne' : (/blanc/i.test(cleanText) ? 'Blanc' : (/ros[ée]/i.test(cleanText) ? 'Rosé' : 'Rouge')),
+                        price: 35
+                    };
+                }
+            }
+
+            let color = matchedRule?.color || 'Rouge';
+            if (/champagne|brut|blanc de blancs|blanc de noirs/i.test(cleanText)) color = 'Champagne';
+            else if (/\bblanc\b/i.test(cleanText)) color = 'Blanc';
+            else if (/\bros[ée]\b/i.test(cleanText)) color = 'Rosé';
+            else if (!matchedRule && avgB > avgR + 8 && avgG > avgR * 0.85) color = 'Champagne';
+
+            const cleanEditorialLine = (str) => (str || '')
+                .replace(/^[^a-zA-ZÀ-ÿ0-9]+/, '')
+                .replace(/\b[a-zA-Z]\s+(?=[A-ZÀ-Ÿ][a-zà-ÿ]{2,})/, '')
+                .trim();
+
+            const rawProducerLine = lines.find(l => /(domaine|ch[âa]teau|maison|champagne|clos|vignobles|famille)\s+[a-zA-ZÀ-ÿ]{3,}/i.test(l)) || '';
+            const producerLine = cleanEditorialLine(rawProducerLine);
+
+            let cuveeLine = '';
+            if (/les\s+cot[eé]aux|4\s*cots/i.test(cleanText)) {
+                cuveeLine = 'Les Coteaux';
+            } else {
+                const candidate = lines.find(l => {
+                    const cl = cleanEditorialLine(l);
+                    return cl.length >= 4 &&
+                        cl !== producerLine &&
+                        !/(appellation|contr[ôo]l[ée]e|mis en bouteille|produit de france|cru des c[ôo]tes|alc|vol|750|louis loron)/i.test(cl) &&
+                        (!matchedRule || !cl.toLowerCase().includes(matchedRule.appellation.replace(' AOC', '').toLowerCase())) &&
+                        (!vintage || cl !== vintage);
+                });
+                cuveeLine = cleanEditorialLine(candidate);
+            }
+
+            let classification = '';
+            if (/grand cru/i.test(cleanText)) classification = 'Grand Cru';
+            else if (/premier cru|1er cru/i.test(cleanText)) classification = 'Premier Cru';
+            else if (/cru des c[ôo]tes du rh[ôo]ne/i.test(cleanText)) classification = 'Cru des Côtes du Rhône';
+            else if (/cru bourgeois/i.test(cleanText)) classification = 'Cru Bourgeois';
+            else if (/vieilles vignes/i.test(cleanText)) classification = 'Vieilles Vignes';
+
+            const estPrice = matchedRule?.price || (color === 'Champagne' ? 55 : 34);
+
+            return {
+                _sourceLabel: cleanText.length > 6 ? 'Lecture optique étiquette (OCR)' : 'Analyse visuelle',
+                name: cuveeLine || matchedRule?.appellation || '',
+                producer: producerLine,
+                appellation: matchedRule?.appellation || '',
+                region: matchedRule?.region || '',
+                country: 'France',
+                vintage: vintage || 'NV',
+                color,
+                grapes: matchedRule?.grapes || '',
+                classification,
+                alcohol,
+                detectedFields: {
+                    name: Boolean(cuveeLine),
+                    producer: Boolean(producerLine),
+                    appellation: Boolean(matchedRule?.appellation),
+                    region: Boolean(matchedRule?.region),
+                    country: true,
+                    vintage: Boolean(vintage),
+                    color: true,
+                    grapes: Boolean(matchedRule?.grapes),
+                    classification: Boolean(classification),
+                    alcohol: Boolean(alcohol),
+                    price: Boolean(matchedRule)
+                },
+                price: {
+                    low: Math.round(estPrice * 0.85),
+                    average: estPrice,
+                    high: Math.round(estPrice * 1.25)
+                }
+            };
+        }
+
+        function analyzeImageLocally(dataUrl) {
+            return new Promise((resolve) => {
+                const img = new Image();
+                img.onload = async () => {
+                    try {
+                        const cropX = Math.floor(img.width * 0.15);
+                        const cropY = Math.floor(img.height * 0.25);
+                        const cropW = Math.floor(img.width * 0.72);
+                        const cropH = Math.floor(img.height * 0.65);
+
+                        const canvas = document.createElement('canvas');
+                        const ctx = canvas.getContext('2d');
+                        const targetW = 1100;
+                        const targetH = Math.max(600, Math.round((cropH / cropW) * targetW));
+                        canvas.width = targetW;
+                        canvas.height = targetH;
+                        ctx.drawImage(img, cropX, cropY, cropW, cropH, 0, 0, targetW, targetH);
+
+                        const imgData = ctx.getImageData(0, 0, targetW, targetH);
+                        const frame = imgData.data;
+                        let rSum = 0, gSum = 0, bSum = 0, pxCount = 0;
+
+                        for (let i = 0; i < frame.length; i += 4) {
+                            const r = frame[i], g = frame[i + 1], b = frame[i + 2];
+                            rSum += r; gSum += g; bSum += b; pxCount++;
+                            const lum = 0.299 * r + 0.587 * g + 0.114 * b;
+                            const contrasted = Math.min(255, Math.max(0, (lum - 115) * 2.1 + 128));
+                            frame[i] = contrasted;
+                            frame[i + 1] = contrasted;
+                            frame[i + 2] = contrasted;
+                        }
+                        ctx.putImageData(imgData, 0, 0);
+
+                        const avgR = pxCount ? rSum / pxCount : 120;
+                        const avgG = pxCount ? gSum / pxCount : 100;
+                        const avgB = pxCount ? bSum / pxCount : 90;
+
+                        let ocrText = '';
+                        if (window.Tesseract && typeof window.Tesseract.recognize === 'function') {
+                            try {
+                                const ocrPromise = window.Tesseract.recognize(canvas, 'fra+eng');
+                                const timeoutPromise = new Promise((_, rej) => setTimeout(() => rej(new Error('OCR timeout')), 11000));
+                                const ocrResult = await Promise.race([ocrPromise, timeoutPromise]);
+                                ocrText = ocrResult?.data?.text || '';
+                            } catch (ocrErr) {
+                                console.warn('OCR fallback:', ocrErr);
+                            }
+                        }
+
+                        resolve(parseWineMetadataFromOcrText(ocrText, avgR, avgG, avgB));
+                    } catch (err) {
+                        resolve(null);
+                    }
+                };
+                img.onerror = () => resolve(null);
+                img.src = dataUrl;
+            });
+        }
+
+        function startScanValidationQueue(draftList, hasAiResult) {
+            state.scanQueue = Array.isArray(draftList) && draftList.length ? draftList : [buildDraftWineFromScan(null, '')];
+            state.scanQueueIndex = 0;
+            openScanValidationModal(state.scanQueue[0], hasAiResult);
+        }
+
+        function advanceOrFinishScanQueue() {
+            state.scanQueueIndex += 1;
+            if (state.scanQueueIndex < state.scanQueue.length) {
+                openScanValidationModal(state.scanQueue[state.scanQueueIndex], true);
+            } else {
+                const countTotal = state.scanQueue.length;
+                state.scanQueue = [];
+                state.scanQueueIndex = 0;
+                window.__pendingScanDraft = null;
+                closeModal();
+                navigateTo('cellar');
+                if (countTotal > 1) {
+                    showToast(`Traitement terminé (${countTotal} bouteilles analysées)`);
+                }
+            }
+        }
+
+        function skipCurrentScannedWine() {
+            showToast('Bouteille ignorée');
+            advanceOrFinishScanQueue();
+        }
+
+        function openScanValidationModal(draftWine, hasAiResult) {
+            window.__pendingScanDraft = draftWine;
+            const defaultCaveId = state.caves[0]?.id || 'cave-1';
+            const df = draftWine.detectedFields || {};
+            const totalInBatch = state.scanQueue.length;
+            const currentStep = state.scanQueueIndex + 1;
+            const isMultiBatch = totalInBatch > 1;
+
+            openModal(`
+                <div class="space-y-4">
+                    <div class="flex items-center justify-between gap-2">
+                        <div>
+                            ${isMultiBatch ? `
+                                <div class="flex items-center gap-2 mb-1">
+                                    <span class="px-2.5 py-0.5 rounded-full bg-bordeaux text-ivory text-[10px] font-bold tracking-wide">Bouteille ${currentStep} / ${totalInBatch}</span>
+                                    <span class="text-[10px] text-gold font-semibold uppercase tracking-wider">Validation séquentielle</span>
+                                </div>
+                            ` : `
+                                <p class="text-[10px] uppercase tracking-[0.18em] text-gold font-semibold">${hasAiResult ? 'Champs remplis par l’IA — Vérifiez & ajustez' : 'Saisie & validation'}</p>
+                            `}
+                            <h3 class="font-serif text-xl font-bold text-ink">${isMultiBatch ? `Valider la bouteille ${currentStep} sur ${totalInBatch}` : 'Valider la bouteille'}</h3>
+                        </div>
+                        <button onclick="cancelScanBatch()" class="p-1.5 rounded-full bg-ivory text-inkmuted cursor-pointer"><i data-lucide="x" class="w-4 h-4"></i></button>
+                    </div>
+
+                    <div class="flex items-center gap-3 p-2.5 rounded-2xl bg-ivory border border-sand">
+                        <img src="${draftWine.imageUrl}" onerror="this.src='https://placehold.co/200x260/5C1826/FBF9F5?text=Vin'" alt="Aperçu étiquette" class="w-14 h-18 object-cover rounded-xl border border-sand shrink-0">
+                        <div class="flex-1 text-[11px] text-inkmuted leading-snug space-y-1">
+                            <p class="font-semibold text-ink">${isMultiBatch ? `${totalInBatch} bouteilles détectées sur cette photo` : (hasAiResult ? 'Informations trouvées sur l’étiquette & Internet' : 'Complétez les champs de votre bouteille')}</p>
+                            <p>${isMultiBatch ? 'Vérifiez chaque fiche l’une après l’autre avant de l’ajouter à votre cave.' : 'Ajustez un champ ou relancez une recherche Web si besoin.'}</p>
+                            <button type="button" onclick="enrichDraftFromWebSearch()" class="mt-1 px-2.5 py-1 rounded-lg bg-goldlight text-bordeaux border border-gold/40 text-[10px] font-semibold inline-flex items-center gap-1 hover:bg-gold/20 cursor-pointer">
+                                <i data-lucide="globe" class="w-3 h-3"></i>
+                                <span>Compléter via Internet</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="space-y-2.5 text-xs">
+                        <div class="grid grid-cols-2 gap-2">
+                            <div>
+                                <div class="flex items-center justify-between mb-1">
+                                    <label class="text-[10px] font-semibold text-inkmuted uppercase">Nom / Cuvée</label>
+                                    ${fieldBadge(df, 'name')}
+                                </div>
+                                <input type="text" id="val-wine-name" value="${draftWine.name.replace(/"/g, '&quot;')}" placeholder="Ex : Belle Époque" class="w-full p-2.5 rounded-xl bg-ivory border border-sand text-ink">
+                            </div>
+                            <div>
+                                <div class="flex items-center justify-between mb-1">
+                                    <label class="text-[10px] font-semibold text-inkmuted uppercase">Domaine / Maison</label>
+                                    ${fieldBadge(df, 'producer')}
+                                </div>
+                                <input type="text" id="val-wine-producer" value="${draftWine.producer.replace(/"/g, '&quot;')}" placeholder="Ex : Perrier-Jouët" class="w-full p-2.5 rounded-xl bg-ivory border border-sand text-ink">
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-2">
+                            <div>
+                                <div class="flex items-center justify-between mb-1">
+                                    <label class="text-[10px] font-semibold text-inkmuted uppercase">Appellation</label>
+                                    ${fieldBadge(df, 'appellation')}
+                                </div>
+                                <input type="text" id="val-wine-appellation" value="${draftWine.appellation.replace(/"/g, '&quot;')}" placeholder="Ex : Champagne AOC" class="w-full p-2.5 rounded-xl bg-ivory border border-sand text-ink">
+                            </div>
+                            <div>
+                                <div class="flex items-center justify-between mb-1">
+                                    <label class="text-[10px] font-semibold text-inkmuted uppercase">Millésime</label>
+                                    ${fieldBadge(df, 'vintage')}
+                                </div>
+                                <input type="text" id="val-wine-vintage" value="${draftWine.vintage.replace(/"/g, '&quot;')}" placeholder="Ex : 2014 ou NV" class="w-full p-2.5 rounded-xl bg-ivory border border-sand text-ink">
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-2">
+                            <div>
+                                <div class="flex items-center justify-between mb-1">
+                                    <label class="text-[10px] font-semibold text-inkmuted uppercase">Région</label>
+                                    ${fieldBadge(df, 'region')}
+                                </div>
+                                <input type="text" id="val-wine-region" value="${draftWine.region.replace(/"/g, '&quot;')}" placeholder="Ex : Bourgogne" class="w-full p-2.5 rounded-xl bg-ivory border border-sand text-ink">
+                            </div>
+                            <div>
+                                <div class="flex items-center justify-between mb-1">
+                                    <label class="text-[10px] font-semibold text-inkmuted uppercase">Pays</label>
+                                    ${fieldBadge(df, 'country')}
+                                </div>
+                                <input type="text" id="val-wine-country" value="${draftWine.country.replace(/"/g, '&quot;')}" placeholder="Ex : France" class="w-full p-2.5 rounded-xl bg-ivory border border-sand text-ink">
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-2">
+                            <div>
+                                <div class="flex items-center justify-between mb-1">
+                                    <label class="text-[10px] font-semibold text-inkmuted uppercase">Couleur / Type</label>
+                                    ${fieldBadge(df, 'color')}
+                                </div>
+                                <select id="val-wine-color" class="w-full p-2.5 rounded-xl bg-ivory border border-sand text-ink">
+                                    ${['Rouge', 'Blanc', 'Rosé', 'Champagne'].map(col => `<option value="${col}" ${draftWine.color === col ? 'selected' : ''}>${col}</option>`).join('')}
+                                </select>
+                            </div>
+                            <div>
+                                <div class="flex items-center justify-between mb-1">
+                                    <label class="text-[10px] font-semibold text-inkmuted uppercase">Cépages</label>
+                                    ${fieldBadge(df, 'grapes')}
+                                </div>
+                                <input type="text" id="val-wine-grapes" value="${draftWine.grapes.replace(/"/g, '&quot;')}" placeholder="Ex : Pinot Noir" class="w-full p-2.5 rounded-xl bg-ivory border border-sand text-ink">
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-3 gap-2">
+                            <div>
+                                <div class="flex items-center justify-between mb-1">
+                                    <label class="text-[10px] font-semibold text-inkmuted uppercase">Classement</label>
+                                    ${fieldBadge(df, 'classification', 'IA')}
+                                </div>
+                                <input type="text" id="val-wine-class" value="${draftWine.classification.replace(/"/g, '&quot;')}" placeholder="Grand Cru..." class="w-full p-2.5 rounded-xl bg-ivory border border-sand text-ink">
+                            </div>
+                            <div>
+                                <div class="flex items-center justify-between mb-1">
+                                    <label class="text-[10px] font-semibold text-inkmuted uppercase">Degré</label>
+                                    ${fieldBadge(df, 'alcohol', 'IA')}
+                                </div>
+                                <input type="text" id="val-wine-alcohol" value="${draftWine.alcohol.replace(/"/g, '&quot;')}" placeholder="13.5%" class="w-full p-2.5 rounded-xl bg-ivory border border-sand text-ink">
+                            </div>
+                            <div>
+                                <div class="flex items-center justify-between mb-1">
+                                    <label class="text-[10px] font-semibold text-inkmuted uppercase">Cote (€)</label>
+                                    ${fieldBadge(df, 'price', 'Est.')}
+                                </div>
+                                <input type="number" id="val-wine-est-price" value="${draftWine.price.average}" class="w-full p-2.5 rounded-xl bg-ivory border border-sand text-ink font-semibold">
+                            </div>
+                        </div>
+
+                        <div class="pt-2 border-t border-sand/70">
+                            <label class="text-[10px] font-semibold text-inkmuted uppercase block mb-1">Cave de stockage</label>
+                            <select id="val-wine-cave" class="w-full p-2.5 rounded-xl bg-ivory border border-sand text-ink">
+                                ${state.caves.map(c => `<option value="${c.id}" ${c.id === defaultCaveId ? 'selected' : ''}>${c.name}</option>`).join('')}
+                            </select>
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-2">
+                            <div>
+                                <label class="text-[10px] font-semibold text-inkmuted uppercase block mb-1">Quantité</label>
+                                <input type="number" id="val-wine-qty" value="${draftWine.detectedQty || 1}" min="1" max="200" class="w-full p-2.5 rounded-xl bg-ivory border border-sand text-ink font-bold">
+                            </div>
+                            <div>
+                                <label class="text-[10px] font-semibold text-inkmuted uppercase block mb-1">Prix d'achat (€)</label>
+                                <input type="number" id="val-wine-buy-price" value="${draftWine.price.average}" min="0" class="w-full p-2.5 rounded-xl bg-ivory border border-sand text-ink">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="flex gap-2 pt-2">
+                        ${isMultiBatch ? `
+                            <button type="button" onclick="skipCurrentScannedWine()" class="py-3 px-4 rounded-xl bg-ivory border border-sand text-xs font-medium text-inkmuted hover:text-ink cursor-pointer">Passer</button>
+                        ` : `
+                            <button type="button" onclick="cancelScanBatch()" class="flex-1 py-3 rounded-xl bg-ivory border border-sand text-xs font-medium text-inkmuted cursor-pointer">Annuler</button>
+                        `}
+                        <button type="button" onclick="confirmSaveScannedWine()" class="flex-1 py-3 px-5 rounded-xl bg-bordeaux text-ivory text-xs font-semibold hover:bg-bordeauxlight cursor-pointer">
+                            ${isMultiBatch && currentStep < totalInBatch ? `Valider & suivante (${currentStep + 1}/${totalInBatch}) →` : 'Valider & ajouter en cave'}
+                        </button>
+                    </div>
+                </div>
+            `);
+        }
+
+        function confirmSaveScannedWine() {
+            const base = window.__pendingScanDraft || buildDraftWineFromScan(null, '');
+            const name = document.getElementById('val-wine-name')?.value.trim() || '';
+            const producer = document.getElementById('val-wine-producer')?.value.trim() || '';
+            const appellation = document.getElementById('val-wine-appellation')?.value.trim() || '';
+            const vintage = document.getElementById('val-wine-vintage')?.value.trim() || 'NV';
+            const region = document.getElementById('val-wine-region')?.value.trim() || '';
+            const country = document.getElementById('val-wine-country')?.value.trim() || 'France';
+            const color = document.getElementById('val-wine-color')?.value || 'Rouge';
+            const grapes = document.getElementById('val-wine-grapes')?.value.trim() || '';
+            const classification = document.getElementById('val-wine-class')?.value.trim() || '';
+            const alcohol = document.getElementById('val-wine-alcohol')?.value.trim() || '';
+            const estPrice = Math.max(0, parseFloat(document.getElementById('val-wine-est-price')?.value) || 0);
+            const caveId = document.getElementById('val-wine-cave')?.value || (state.caves[0]?.id || 'cave-1');
+            const qty = Math.max(1, parseInt(document.getElementById('val-wine-qty')?.value) || 1);
+            const buyPrice = Math.max(0, parseFloat(document.getElementById('val-wine-buy-price')?.value) || estPrice);
+
+            const finalName = name || appellation || producer || 'Cuvée sans nom';
+            const wineId = 'wine-' + Date.now() + '-' + state.scanQueueIndex;
+
+            const newWine = {
+                ...base,
+                id: wineId,
+                name: finalName,
+                producer,
+                appellation,
+                region,
+                country,
+                vintage,
+                color,
+                grapes,
+                classification,
+                alcohol,
+                price: {
+                    ...base.price,
+                    low: Math.round(estPrice * 0.85),
+                    average: estPrice,
+                    high: Math.round(estPrice * 1.2)
+                }
+            };
+
+            state.wines.unshift(newWine);
+            state.stockEntries.unshift({
+                id: 'stock-' + Date.now() + '-' + state.scanQueueIndex,
+                wineId,
+                caveId,
+                shelf: 'Clayette 1',
+                row: '',
+                qty,
+                purchaseYear: CURRENT_YEAR,
+                purchasePrice: buyPrice,
+                notes: ''
+            });
+
+            saveState();
+            showToast(`${qty} bouteille(s) de ${finalName} ajoutée(s)`);
+            advanceOrFinishScanQueue();
+        }
+
+        function resizeImageForVisionApi(dataUrl, maxDim = 1600) {
+            return new Promise((resolve) => {
+                const img = new Image();
+                img.onload = () => {
+                    const scale = Math.min(1, maxDim / Math.max(img.width, img.height));
+                    const w = Math.round(img.width * scale);
+                    const h = Math.round(img.height * scale);
+                    const canvas = document.createElement('canvas');
+                    canvas.width = w;
+                    canvas.height = h;
+                    const ctx = canvas.getContext('2d');
+                    ctx.drawImage(img, 0, 0, w, h);
+                    const optimized = canvas.toDataURL('image/jpeg', 0.9);
+                    resolve({
+                        base64Data: optimized.split(',')[1],
+                        mimeType: 'image/jpeg'
+                    });
+                };
+                img.onerror = () => resolve({
+                    base64Data: dataUrl.split(',')[1],
+                    mimeType: 'image/jpeg'
+                });
+                img.src = dataUrl;
+            });
+        }
+
+        function extractJsonPayloadFromText(rawText) {
+            if (!rawText) return null;
+            const cleaned = rawText.replace(/\x60{3}(?:json)?\s*/gi, '').replace(/\x60{3}\s*/g, '').trim();
+            try {
+                return JSON.parse(cleaned);
+            } catch (e) {
+                const arrStart = cleaned.indexOf('[');
+                const objStart = cleaned.indexOf('{');
+                if (arrStart !== -1 && (objStart === -1 || arrStart < objStart)) {
+                    const arrEnd = cleaned.lastIndexOf(']');
+                    if (arrEnd > arrStart) {
+                        try {
+                            return JSON.parse(cleaned.slice(arrStart, arrEnd + 1));
+                        } catch (err) {}
+                    }
+                }
+                if (objStart !== -1) {
+                    const objEnd = cleaned.lastIndexOf('}');
+                    if (objEnd > objStart) {
+                        try {
+                            return JSON.parse(cleaned.slice(objStart, objEnd + 1));
+                        } catch (err) {}
+                    }
+                }
+                return null;
+            }
+        }
+
+        async function callGeminiVisionWithWebSearch(base64Data, mimeType, textQueryOverride = '') {
+            const effectiveKey = (state.apiKey || '').trim();
+            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent?key=${encodeURIComponent(effectiveKey)}`;
+
+            const prompt = textQueryOverride
+                ? `Recherche sur Internet toutes les informations viticoles et la cote marché actuelle (en €) pour ce vin ou champagne : "${textQueryOverride}". Réponds UNIQUEMENT par un tableau JSON valide contenant 1 objet (sans texte autour) suivant strictement ce schéma :`
+                : `Observe attentivement cette photo : elle peut contenir UNE SEULE bouteille OU PLUSIEURS bouteilles de vin ou champagne (de gauche à droite / de haut en bas). Identifie CHAQUE bouteille distincte visible (lis le domaine/maison, le nom de cuvée même en écriture cursive, l'appellation, le millésime, le classement, le degré d'alcool) PUIS utilise la recherche Google pour vérifier et compléter pour CHACUNE les cépages exacts, la région, le classement, la fenêtre d'apogée et la cote marché moyenne en euros (iDealwine, Wine-Searcher, Vivino). Si deux bouteilles sont strictement identiques (même cuvée et même millésime), regroupe-les avec "detectedQty": 2. Réponds UNIQUEMENT par un tableau JSON valide [ { ... }, { ... } ] suivant strictement ce schéma pour chaque bouteille :`;
+
+            const schemaInstruction = `
+[
+  {
+    "name": "Nom exact de la cuvée (ex: Les Coteaux, Belle Époque)",
+    "producer": "Nom complet du domaine, château ou maison (ex: Domaine Durand)",
+    "appellation": "Appellation officielle (ex: Saint-Joseph AOC, Champagne AOC)",
+    "region": "Région viticole (ex: Vallée du Rhône, Champagne, Bordeaux, Bourgogne)",
+    "country": "Pays (ex: France)",
+    "vintage": "Millésime (ex: 2020) ou NV",
+    "color": "Rouge, Blanc, Rosé ou Champagne",
+    "grapes": "Cépages exacts (ex: 100% Syrah)",
+    "classification": "Classement ou mention (ex: Grand Cru, Premier Cru, Cru des Côtes du Rhône)",
+    "alcohol": "Degré d'alcool (ex: 13.5%)",
+    "detectedQty": 1,
+    "detectedFields": {
+      "name": true,
+      "producer": true,
+      "appellation": true,
+      "region": true,
+      "country": true,
+      "vintage": true,
+      "color": true,
+      "grapes": true,
+      "classification": true,
+      "alcohol": true,
+      "price": true
+    },
+    "price": { "low": 28, "average": 34, "high": 42, "sources": "Recherche Web" },
+    "maturity": { "status": "Prêt à boire, À son apogée ou À garder", "windowStart": 2024, "peakStart": 2026, "peakEnd": 2030, "windowEnd": 2033, "remainingPotential": "5 à 7 ans", "idealMoment": "Conseil de garde", "servingTemp": "16°C", "decanting": "Carafage 30 min" },
+    "pairings": { "ideal": { "dish": "Plat idéal", "reason": "Pourquoi" }, "suggestions": ["Plat 2", "Plat 3"] },
+    "tasting": { "aromas": "Notes aromatiques précises", "structure": "Structure en bouche", "aiScore": 91 }
+  }
+]`;
+
+            const parts = [{ text: prompt + '\n' + schemaInstruction }];
+            if (base64Data) {
+                parts.push({ inlineData: { mimeType, data: base64Data } });
+            }
+
+            const payload = {
+                contents: [{ parts }],
+                tools: [{ google_search: {} }]
+            };
+
+            const res = await fetch(apiUrl, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+
+            if (!res.ok) {
+                throw new Error('HTTP ' + res.status);
+            }
+
+            const json = await res.json();
+            const rawText = json?.candidates?.[0]?.content?.parts?.map(p => p.text || '').join('\n') || '';
+            const parsed = extractJsonPayloadFromText(rawText);
+            if (!parsed) return null;
+
+            const items = Array.isArray(parsed) ? parsed : (Array.isArray(parsed.bottles) ? parsed.bottles : [parsed]);
+            return items.map(item => ({
+                ...item,
+                _sourceLabel: 'Gemini Vision + Recherche Google'
+            }));
+        }
+
+        async function enrichDraftFromWebSearch() {
+            const nameVal = document.getElementById('val-wine-name')?.value.trim() || '';
+            const prodVal = document.getElementById('val-wine-producer')?.value.trim() || '';
+            const appVal = document.getElementById('val-wine-appellation')?.value.trim() || '';
+            const vintVal = document.getElementById('val-wine-vintage')?.value.trim() || '';
+            const query = [prodVal, nameVal, appVal, vintVal].filter(Boolean).join(' ');
+
+            if (!query) {
+                showToast('Saisissez au moins un domaine, une cuvée ou une appellation');
+                return;
+            }
+
+            showToast('Recherche Internet en cours...');
+            try {
+                const enrichedList = await callGeminiVisionWithWebSearch(null, '', query);
+                const enriched = Array.isArray(enrichedList) ? enrichedList[0] : enrichedList;
+                if (enriched) {
+                    const currentImg = window.__pendingScanDraft?.imageUrl || '';
+                    const updatedDraft = buildDraftWineFromScan(enriched, currentImg, state.scanQueueIndex);
+                    if (state.scanQueue[state.scanQueueIndex]) {
+                        state.scanQueue[state.scanQueueIndex] = updatedDraft;
+                    }
+                    openScanValidationModal(updatedDraft, true);
+                    showToast('Fiche complétée via Internet');
+                } else {
+                    showToast('Aucun résultat complémentaire trouvé');
+                }
+            } catch (err) {
+                showToast(state.apiKey ? 'Erreur de recherche Web' : 'Renseignez votre clé API dans les réglages');
+            }
+        }
+
+        function handleImageUpload(event) {
+            const file = event.target.files?.[0];
+            if (!file) return;
+            event.target.value = '';
+
+            const reader = new FileReader();
+            reader.onload = async (e) => {
+                const dataUrl = e.target.result;
+                state.isAnalyzingPhoto = true;
+                state.scanningPreviewUrl = dataUrl;
+                renderCurrentView();
+
+                try {
+                    const { base64Data, mimeType } = await resizeImageForVisionApi(dataUrl, 1600);
+                    const analyzedList = await callGeminiVisionWithWebSearch(base64Data, mimeType);
+                    if (analyzedList && analyzedList.length > 0) {
+                        const drafts = analyzedList.map((item, idx) => buildDraftWineFromScan(item, dataUrl, idx));
+                        state.isAnalyzingPhoto = false;
+                        renderCurrentView();
+                        if (drafts.length > 1) {
+                            showToast(`${drafts.length} bouteilles détectées sur la photo`);
+                        }
+                        startScanValidationQueue(drafts, true);
+                        return;
+                    }
+                } catch (err) {
+                    console.warn('Fallback OCR local suite erreur Vision+Web:', err);
+                    if (state.apiKey) {
+                        showToast('Vérifiez votre clé API dans les réglages — bascule OCR locale');
+                    }
+                }
+
+                const localAnalyzed = await analyzeImageLocally(dataUrl);
+                const fallbackDraft = buildDraftWineFromScan(localAnalyzed, dataUrl, 0);
+                state.isAnalyzingPhoto = false;
+                renderCurrentView();
+                startScanValidationQueue([fallbackDraft], Boolean(localAnalyzed && (localAnalyzed.name || localAnalyzed.producer || localAnalyzed.appellation)));
+            };
+            reader.readAsDataURL(file);
+        }
+
+        // ==========================================
+        // 10. ACTIONS STOCK, ARCHIVAGE EXCEL & MODALES
+        // ==========================================
+        function archiveConsumedBottle(wine, entry, qtyRemoved = 1, customNote = '', reasonType = 'Bue') {
+            const cave = state.caves.find(c => c.id === entry.caveId);
+            const record = {
+                id: 'hist-' + Date.now() + '-' + Math.random().toString(36).slice(2, 6),
+                reasonType: reasonType,
+                date: new Date().toISOString().split('T')[0],
+                caveName: cave ? cave.name : 'Cave Principale',
+                shelf: entry.shelf || '',
+                row: entry.row || '',
+                qty: qtyRemoved,
+                producer: wine ? wine.producer : '',
+                name: wine ? wine.name : '',
+                appellation: wine ? wine.appellation : '',
+                region: wine ? wine.region : '',
+                vintage: wine ? wine.vintage : '',
+                color: wine ? wine.color : 'Rouge',
+                grapes: wine ? wine.grapes : '',
+                maturityStatus: wine?.maturity?.status || '',
+                peakStart: wine?.maturity?.peakStart || '',
+                peakEnd: wine?.maturity?.peakEnd || '',
+                purchasePrice: entry.purchasePrice || 0,
+                estimatedPrice: wine?.price?.average || entry.purchasePrice || 0,
+                score: null,
+                occasion: '',
+                comment: customNote || '',
+                notes: customNote || ''
+            };
+            state.consumedHistory.unshift(record);
+            return record.id;
+        }
+
+        function adjustStockQty(entryId, delta) {
+            const entry = state.stockEntries.find(e => e.id === entryId);
+            if (!entry) return;
+            const wine = state.wines.find(w => w.id === entry.wineId);
+            const newQty = (parseInt(entry.qty) || 0) + delta;
+
+            if (delta < 0) {
+                const histId = archiveConsumedBottle(wine, entry, Math.abs(delta), '', 'Bue');
+                if (newQty <= 0) {
+                    state.stockEntries = state.stockEntries.filter(e => e.id !== entryId);
+                } else {
+                    entry.qty = newQty;
+                }
+                saveState();
+                renderCurrentView();
+                if (wine) openPostDrinkModal(wine, histId);
+                else showToast('Bouteille ajoutée à l’historique');
+                return;
+            }
+
+            entry.qty = newQty;
+            saveState();
+            renderCurrentView();
+            showToast('Stock mis à jour (+1)');
+        }
+
+        function deleteWineCompletely(wineId) {
+            const wine = state.wines.find(w => w.id === wineId);
+            const entries = state.stockEntries.filter(e => e.wineId === wineId);
+            let lastHistId = null;
+            entries.forEach(entry => {
+                if ((parseInt(entry.qty) || 0) > 0) {
+                    lastHistId = archiveConsumedBottle(wine, entry, parseInt(entry.qty), '', 'Autre');
+                }
+            });
+            state.stockEntries = state.stockEntries.filter(e => e.wineId !== wineId);
+            state.wines = state.wines.filter(w => w.id !== wineId);
+            saveState();
+            navigateTo('cellar');
+            if (wine && lastHistId) {
+                openPostDrinkModal(wine, lastHistId, 'Autre');
+            } else {
+                showToast('Flacon retiré et archivé dans l’historique');
+            }
+        }
+
+        function selectDrinkReason(reason) {
+            const hiddenInput = document.getElementById('drink-reason-type');
+            const btnBue = document.getElementById('btn-reason-bue');
+            const btnAutre = document.getElementById('btn-reason-autre');
+            const scoreRow = document.getElementById('drink-score-row');
+            if (hiddenInput) hiddenInput.value = reason;
+            if (btnBue && btnAutre) {
+                if (reason === 'Bue') {
+                    btnBue.className = 'flex-1 py-2.5 px-3 rounded-xl text-xs font-semibold bg-bordeaux text-ivory border border-bordeaux cursor-pointer transition-colors';
+                    btnAutre.className = 'flex-1 py-2.5 px-3 rounded-xl text-xs font-medium bg-ivory text-inkmuted border border-sand cursor-pointer transition-colors';
+                    if (scoreRow) scoreRow.classList.remove('opacity-60');
+                } else {
+                    btnAutre.className = 'flex-1 py-2.5 px-3 rounded-xl text-xs font-semibold bg-bordeaux text-ivory border border-bordeaux cursor-pointer transition-colors';
+                    btnBue.className = 'flex-1 py-2.5 px-3 rounded-xl text-xs font-medium bg-ivory text-inkmuted border border-sand cursor-pointer transition-colors';
+                    if (scoreRow) scoreRow.classList.add('opacity-60');
+                }
+            }
+        }
+
+        function openPostDrinkModal(wine, histId, defaultReason = 'Bue') {
+            const isAutre = defaultReason === 'Autre';
+            openModal(`
+                <div class="space-y-4">
+                    <div class="flex items-center justify-between">
+                        <h3 class="font-serif text-xl font-bold text-ink">Sortie de cave</h3>
+                        <button onclick="closeModal()" class="p-1.5 rounded-full bg-ivory text-inkmuted cursor-pointer"><i data-lucide="x" class="w-4 h-4"></i></button>
+                    </div>
+                    <p class="text-xs text-inkmuted"><strong>${wine.name} (${wine.vintage})</strong> est ajoutée à votre <strong>Historique</strong> et à votre export Excel.</p>
+
+                    <div class="space-y-1.5">
+                        <label class="text-[11px] font-semibold text-ink block">Motif de sortie :</label>
+                        <input type="hidden" id="drink-reason-type" value="${defaultReason}">
+                        <div class="flex gap-2">
+                            <button type="button" id="btn-reason-bue" onclick="selectDrinkReason('Bue')" class="flex-1 py-2.5 px-3 rounded-xl text-xs ${!isAutre ? 'font-semibold bg-bordeaux text-ivory border border-bordeaux' : 'font-medium bg-ivory text-inkmuted border border-sand'} cursor-pointer transition-colors">🍷 Bue / Dégustée</button>
+                            <button type="button" id="btn-reason-autre" onclick="selectDrinkReason('Autre')" class="flex-1 py-2.5 px-3 rounded-xl text-xs ${isAutre ? 'font-semibold bg-bordeaux text-ivory border border-bordeaux' : 'font-medium bg-ivory text-inkmuted border border-sand'} cursor-pointer transition-colors">📦 Autre (offerte, etc.)</button>
+                        </div>
+                    </div>
+
+                    <div id="drink-score-row" class="flex items-center justify-between gap-3 bg-ivory p-3 rounded-xl border border-sand ${isAutre ? 'opacity-60' : ''}">
+                        <label class="text-xs font-medium text-ink">Note /100 (optionnel) :</label>
+                        <input type="number" id="drink-score" value="${isAutre ? '' : '92'}" placeholder="—" min="50" max="100" class="w-20 p-1.5 rounded-lg bg-offwhite border border-sand text-xs font-bold text-center">
+                    </div>
+
+                    <input type="text" id="drink-occasion" placeholder="Occasion ou précision (ex : Dîner, Cadeau...)" class="w-full p-3 rounded-xl bg-ivory border border-sand text-xs">
+                    <textarea id="drink-comment" rows="3" placeholder="Laisser un commentaire (arômes, souvenir, raison du retrait)..." class="w-full p-3 rounded-xl bg-ivory border border-sand text-xs"></textarea>
+
+                    <div class="flex gap-2">
+                        <button onclick="closeModal()" class="flex-1 py-2.5 rounded-xl bg-ivory border border-sand text-xs font-medium text-inkmuted cursor-pointer">Fermer</button>
+                        <button onclick="savePostDrinkNote('${histId}')" class="flex-1 py-2.5 rounded-xl bg-bordeaux text-ivory text-xs font-medium cursor-pointer">Enregistrer</button>
+                    </div>
+                </div>
+            `);
+        }
+
+        function savePostDrinkNote(histId) {
+            const reasonType = document.getElementById('drink-reason-type')?.value || 'Bue';
+            const occasion = document.getElementById('drink-occasion')?.value.trim() || '';
+            const rawScore = document.getElementById('drink-score')?.value.trim();
+            const score = rawScore ? Math.min(100, Math.max(1, parseInt(rawScore))) : null;
+            const comment = document.getElementById('drink-comment')?.value.trim() || '';
+
+            const target = (state.consumedHistory || []).find(h => h.id === histId);
+            if (target) {
+                target.reasonType = reasonType;
+                target.occasion = occasion;
+                target.score = score;
+                target.comment = comment;
+                target.notes = [score ? `Note ${score}/100` : '', occasion, comment].filter(Boolean).join(' — ');
+            }
+
+            saveState();
+            closeModal();
+            renderCurrentView();
+            showToast('Enregistré dans l’Historique et prêt pour Excel');
+        }
+
+        function openAddToCaveModal(wineId) {
+            const w = state.wines.find(item => item.id === wineId);
+            if (!w) return;
+            openModal(`
+                <div class="space-y-4">
+                    <div class="flex items-center justify-between">
+                        <h3 class="font-serif text-xl font-bold text-ink">Ranger en cave</h3>
+                        <button onclick="closeModal()" class="p-1.5 rounded-full bg-ivory text-inkmuted cursor-pointer"><i data-lucide="x" class="w-4 h-4"></i></button>
+                    </div>
+                    <p class="text-xs font-medium text-bordeaux">${w.name} (${w.vintage}) — ${w.producer}</p>
+                    <div class="space-y-3 text-xs">
+                        <div>
+                            <label class="block text-inkmuted mb-1">Choisir la cave</label>
+                            <select id="add-stock-cave" class="w-full p-2.5 rounded-xl bg-ivory border border-sand">
+                                ${state.caves.map(c => `<option value="${c.id}">${c.name}</option>`).join('')}
+                            </select>
+                        </div>
+                        <div class="grid grid-cols-2 gap-2">
+                            <div>
+                                <label class="block text-inkmuted mb-1">Quantité</label>
+                                <input type="number" id="add-stock-qty" value="1" min="1" max="100" class="w-full p-2.5 rounded-xl bg-ivory border border-sand font-bold">
+                            </div>
+                            <div>
+                                <label class="block text-inkmuted mb-1">Prix d'achat unitaire (€)</label>
+                                <input type="number" id="add-stock-price" value="${w.price?.average || 30}" class="w-full p-2.5 rounded-xl bg-ivory border border-sand">
+                            </div>
+                        </div>
+                    </div>
+                    <button onclick="confirmAddToCave('${w.id}')" class="w-full py-3 rounded-xl bg-bordeaux text-ivory text-xs font-semibold cursor-pointer">Valider l'entrée en cave</button>
+                </div>
+            `);
+        }
+
+        function confirmAddToCave(wineId) {
+            const caveId = document.getElementById('add-stock-cave').value;
+            const qty = Math.max(1, parseInt(document.getElementById('add-stock-qty').value) || 1);
+            const purchasePrice = parseFloat(document.getElementById('add-stock-price').value) || 0;
+
+            state.stockEntries.unshift({
+                id: 'stock-' + Date.now(),
+                wineId,
+                caveId,
+                shelf: 'Clayette 1',
+                row: '',
+                qty,
+                purchaseYear: CURRENT_YEAR,
+                purchasePrice,
+                notes: ''
+            });
+            saveState();
+            closeModal();
+            renderCurrentView();
+            showToast(`${qty} bouteille(s) ajoutée(s) en cave`);
+        }
+
+        function openAddCaveModal() {
+            openModal(`
+                <div class="space-y-4">
+                    <div class="flex items-center justify-between">
+                        <h3 class="font-serif text-xl font-bold text-ink">Nouvelle cave</h3>
+                        <button onclick="closeModal()" class="p-1.5 rounded-full bg-ivory text-inkmuted cursor-pointer"><i data-lucide="x" class="w-4 h-4"></i></button>
+                    </div>
+                    <div class="space-y-3 text-xs">
+                        <input type="text" id="new-cave-name" placeholder="Nom (ex : Cave Maison de Campagne)" class="w-full p-3 rounded-xl bg-ivory border border-sand">
+                        <input type="text" id="new-cave-type" value="Cave enterrée" class="w-full p-3 rounded-xl bg-ivory border border-sand">
+                        <div class="grid grid-cols-2 gap-2">
+                            <input type="number" id="new-cave-temp" value="12" placeholder="Température °C" class="w-full p-3 rounded-xl bg-ivory border border-sand">
+                            <input type="number" id="new-cave-cap" value="100" placeholder="Capacité btl" class="w-full p-3 rounded-xl bg-ivory border border-sand">
+                        </div>
+                    </div>
+                    <button onclick="createNewCave()" class="w-full py-3 rounded-xl bg-bordeaux text-ivory text-xs font-semibold cursor-pointer">Créer cette cave</button>
+                </div>
+            `);
+        }
+
+        function createNewCave() {
+            const name = document.getElementById('new-cave-name').value.trim();
+            if (!name) return;
+            state.caves.push({
+                id: 'cave-' + Date.now(),
+                name,
+                type: document.getElementById('new-cave-type').value.trim() || 'Cave à vin',
+                shelves: 6,
+                capacity: parseInt(document.getElementById('new-cave-cap').value) || 100,
+                temp: parseInt(document.getElementById('new-cave-temp').value) || 12,
+                humidity: 75
+            });
+            saveState();
+            closeModal();
+            renderCurrentView();
+            showToast('Nouvelle cave ajoutée');
+        }
+
+        function openSettingsModal() {
+            const activeCount = state.stockEntries.reduce((acc, e) => acc + (parseInt(e.qty) || 0), 0);
+            const historyCount = (state.consumedHistory || []).length;
+
+            openModal(`
+                <div class="space-y-5">
+                    <div class="flex items-center justify-between">
+                        <h3 class="font-serif text-xl font-bold text-ink">Paramètres & Sauvegarde</h3>
+                        <button onclick="closeModal()" class="p-1.5 rounded-full bg-ivory text-inkmuted cursor-pointer"><i data-lucide="x" class="w-4 h-4"></i></button>
+                    </div>
+
+                    <!-- Clé API Gemini -->
+                    <div class="space-y-2 text-xs">
+                        <label class="font-semibold text-ink block">Clé API Google Gemini (Scan & Sommelier IA)</label>
+                        <input type="password" id="settings-api-key" value="${state.apiKey}" placeholder="AIzaSy..." class="w-full p-3 rounded-xl bg-ivory border border-sand">
+                        <button onclick="saveApiKeyFromSettings()" class="w-full py-2.5 rounded-xl bg-bordeaux text-ivory font-medium cursor-pointer">Enregistrer la clé API</button>
+                    </div>
+
+                    <!-- Sauvegarde & Restauration Excel -->
+                    <div class="p-4 rounded-2xl bg-emerald-50/70 border border-emerald-200 space-y-3 text-xs">
+                        <div class="flex items-center justify-between">
+                            <p class="font-bold text-emeraldwine flex items-center gap-1.5">
+                                <i data-lucide="file-spreadsheet" class="w-4 h-4"></i>
+                                <span>Sauvegarde Excel (.csv)</span>
+                            </p>
+                            <span class="text-[10px] text-emeraldwine">${activeCount} en cave · ${historyCount} archivée(s)</span>
+                        </div>
+                        <p class="text-[11px] text-inkmuted leading-relaxed">Exportez votre inventaire complet (bouteilles en cave + historique des bouteilles bues) vers votre iCloud Drive pour l'ouvrir dans Excel ou Numbers.</p>
+                        <div class="grid grid-cols-2 gap-2">
+                            <button onclick="exportCellarToExcelCsv()" class="py-2.5 px-3 rounded-xl bg-emeraldwine text-white font-medium cursor-pointer">Exporter Excel</button>
+                            <button onclick="document.getElementById('import-excel-input').click()" class="py-2.5 px-3 rounded-xl bg-white border border-emerald-300 text-emeraldwine font-medium cursor-pointer">Importer Excel</button>
+                        </div>
+                    </div>
+
+                    <!-- Téléchargement du fichier de l'application -->
+                    <div class="pt-2 border-t border-sand space-y-2.5 text-xs">
+                        <button onclick="downloadAppHtmlFile()" class="w-full py-2.5 rounded-xl bg-ivory border border-sand text-ink font-medium flex items-center justify-center gap-2 cursor-pointer">
+                            <i data-lucide="download" class="w-4 h-4 text-bordeaux"></i>
+                            <span>Télécharger le fichier de l'app (index.html)</span>
+                        </button>
+                        <p class="text-center text-[10px] uppercase tracking-[0.24em] text-gold font-semibold pt-1">Designed and built by AGO</p>
+                    </div>
+                </div>
+            `);
+        }
+
+        function saveApiKeyFromSettings() {
+            const val = document.getElementById('settings-api-key')?.value.trim() || '';
+            state.apiKey = val;
+            saveState();
+            closeModal();
+            renderCurrentView();
+            showToast(val ? 'Clé API Gemini enregistrée' : 'Clé API effacée');
+        }
+
+        function downloadAppHtmlFile() {
+            const htmlContent = '<!DOCTYPE html>\n' + document.documentElement.outerHTML;
+            const blob = new Blob([htmlContent], { type: 'text/html;charset=utf-8' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'index.html';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            showToast('Fichier index.html téléchargé');
+        }
+
+        // ==========================================
+        // 11. RENDU PRINCIPAL & INITIALISATION
+        // ==========================================
+        function renderCurrentView() {
+            const container = document.getElementById('app-content');
+            if (!container) return;
+
+            if (state.isAnalyzingPhoto) {
+                container.innerHTML = `
+                    <div class="editorial-card p-8 text-center space-y-4 fade-in">
+                        <div class="w-14 h-14 rounded-full bg-goldlight text-bordeaux flex items-center justify-center mx-auto animate-pulse">
+                            <i data-lucide="globe" class="w-7 h-7"></i>
+                        </div>
+                        <h3 class="font-serif text-2xl font-bold text-ink">Analyse IA & Recherche Internet...</h3>
+                        <p class="text-xs text-inkmuted">Détection de toutes les bouteilles sur la photo et recherche sur le Web des domaines, cépages, apogées et cotes.</p>
+                    </div>
+                `;
+                if (window.lucide) lucide.createIcons();
+                return;
+            }
+
+            switch (state.currentView) {
+                case 'sommelier-pairing':
+                    container.innerHTML = renderSommelierPairingView();
+                    break;
+                case 'history':
+                    container.innerHTML = renderHistoryView();
+                    break;
+                case 'cellar':
+                    container.innerHTML = renderCellarView();
+                    break;
+                case 'wine-detail':
+                    container.innerHTML = renderWineDetailView();
+                    break;
+                case 'home':
+                default:
+                    container.innerHTML = renderHomeView();
+                    break;
+            }
+            if (window.lucide) lucide.createIcons();
+        }
+
+        window.addEventListener('DOMContentLoaded', () => {
+            loadState();
+            applyAppIcon();
+            updateCellarBadge();
+            renderCurrentView();
+        });
+    </script>
+</body>
+</html>
