@@ -1,0 +1,2418 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>Vin sur Vin — Gestion de Cave</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,600;0,700;1,600&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        serif: ['Cormorant Garamond', 'serif']
+                    },
+                    colors: {
+                        cream: '#FBF9F5',
+                        sand: '#F3EFE6',
+                        card: '#FFFFFF',
+                        borderline: '#E6DFD3',
+                        ink: '#1E1A18',
+                        inkmuted: '#6E655F',
+                        bordeaux: '#6B1422',
+                        gold: '#D4AF37',
+                        'gold-dark': '#9E7B1C'
+                    }
+                }
+            }
+        };
+    </script>
+
+    <style>
+        html, body {
+            overflow-x: hidden;
+            max-width: 100%;
+        }
+        body {
+            background-color: #FBF9F5;
+            color: #1E1A18;
+            -webkit-tap-highlight-color: transparent;
+            padding-top: env(safe-area-inset-top);
+            padding-bottom: calc(92px + env(safe-area-inset-bottom));
+        }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        .glass-header {
+            background: rgba(251, 249, 245, 0.95);
+            backdrop-filter: blur(14px);
+            -webkit-backdrop-filter: blur(14px);
+            padding-top: max(0.75rem, env(safe-area-inset-top));
+        }
+        .bottom-nav {
+            background: rgba(255, 255, 255, 0.97);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            padding-bottom: max(10px, env(safe-area-inset-bottom));
+        }
+        @media (max-width: 380px) {
+            html { font-size: 15px; }
+        }
+        @keyframes fadeUp {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .animate-fade-up { animation: fadeUp 0.22s ease-out forwards; }
+    </style>
+</head>
+<body class="antialiased selection:bg-bordeaux selection:text-white">
+
+    <!-- EN-TÊTE -->
+    <header class="sticky top-0 z-30 glass-header border-b border-borderline px-4 pb-3">
+        <div class="max-w-lg mx-auto flex items-center justify-between gap-2">
+            <button onclick="switchTab('home')" class="flex items-center gap-2.5 text-left min-w-0 active:opacity-80">
+                <div class="w-9 h-9 rounded-xl bg-bordeaux text-white flex items-center justify-center shadow-sm shrink-0">
+                    <i class="ph-fill ph-wine text-xl text-gold"></i>
+                </div>
+                <div class="min-w-0">
+                    <h1 class="font-serif text-2xl font-bold leading-none text-bordeaux tracking-tight truncate">Vin sur Vin</h1>
+                </div>
+            </button>
+            <div class="flex items-center gap-2 shrink-0">
+                <button onclick="exportCellarToExcelCsv()" title="Exporter en Excel (.csv)" class="px-3 h-9 rounded-full bg-emerald-50 border border-emerald-200 flex items-center gap-1.5 text-emerald-800 text-xs font-semibold active:scale-95 transition">
+                    <i class="ph-bold ph-file-xls text-base"></i>
+                    <span>Excel</span>
+                </button>
+                <button onclick="openSettingsModal()" title="Paramètres & Clé API" class="w-9 h-9 rounded-full bg-sand border border-borderline flex items-center justify-center text-ink active:scale-95 transition relative">
+                    <i class="ph ph-gear text-lg"></i>
+                    <span id="api-status-dot" class="w-2.5 h-2.5 rounded-full bg-amber-500 border-2 border-cream absolute -top-0.5 -right-0.5"></span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- CONTENU PRINCIPAL -->
+    <main id="app-content" class="max-w-lg mx-auto px-4 pt-4 space-y-5"></main>
+
+    <!-- ENTRÉES FICHIERS CACHÉES -->
+    <input type="file" id="camera-input" accept="image/*" capture="environment" class="hidden" onchange="handleImageUpload(event)">
+    <input type="file" id="gallery-input" accept="image/*" class="hidden" onchange="handleImageUpload(event)">
+    <input type="file" id="csv-import-input" accept=".csv,text/csv" class="hidden" onchange="handleExcelCsvImport(event)">
+
+    <!-- NAVIGATION BASSE -->
+    <nav class="fixed bottom-0 inset-x-0 z-30 bottom-nav border-t border-borderline px-2 pt-2">
+        <div class="max-w-lg mx-auto grid grid-cols-5 items-center text-center">
+            <button onclick="switchTab('home')" id="nav-home" class="nav-btn flex flex-col items-center gap-0.5 py-1.5 text-bordeaux">
+                <i class="ph-fill ph-house text-xl"></i>
+                <span class="text-[10px] font-semibold">Accueil</span>
+            </button>
+            <button onclick="switchTab('cellar')" id="nav-cellar" class="nav-btn flex flex-col items-center gap-0.5 py-1.5 text-inkmuted">
+                <i class="ph ph-wine text-xl"></i>
+                <span class="text-[10px] font-medium">Ma Cave</span>
+            </button>
+            <div class="flex justify-center -mt-6">
+                <button onclick="openScanChoiceModal()" aria-label="Scanner une bouteille" class="w-14 h-14 rounded-full bg-bordeaux text-white shadow-lg shadow-bordeaux/30 border-4 border-cream flex items-center justify-center active:scale-95 transition">
+                    <i class="ph-bold ph-camera text-2xl text-gold"></i>
+                </button>
+            </div>
+            <button onclick="switchTab('sommelier')" id="nav-sommelier" class="nav-btn flex flex-col items-center gap-0.5 py-1.5 text-inkmuted">
+                <i class="ph ph-sparkle text-xl"></i>
+                <span class="text-[10px] font-medium">Sommelier</span>
+            </button>
+            <button onclick="switchTab('history')" id="nav-history" class="nav-btn flex flex-col items-center gap-0.5 py-1.5 text-inkmuted">
+                <i class="ph ph-clock-counter-clockwise text-xl"></i>
+                <span class="text-[10px] font-medium">Historique</span>
+            </button>
+        </div>
+    </nav>
+
+    <!-- MODALE GÉNÉRIQUE -->
+    <div id="modal-overlay" onclick="if(event.target === this) closeModal()" class="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs hidden items-end sm:items-center justify-center p-0 sm:p-4">
+        <div id="modal-box" style="padding-bottom: max(1.75rem, env(safe-area-inset-bottom));" class="bg-cream w-full max-w-lg rounded-t-3xl sm:rounded-3xl border border-borderline shadow-2xl max-h-[88dvh] overflow-y-auto p-5 animate-fade-up"></div>
+    </div>
+
+    <!-- ZOOM PHOTO PLEIN ÉCRAN -->
+    <div id="photo-zoom-overlay" onclick="closePhotoZoom()" class="fixed inset-0 z-[60] bg-black/90 hidden flex-col items-center justify-center p-4">
+        <button onclick="closePhotoZoom()" class="self-end mb-3 w-10 h-10 rounded-full bg-white/15 text-white flex items-center justify-center text-xl">✕</button>
+        <img id="photo-zoom-img" src="" alt="Photo bouteille" class="max-h-[80vh] max-w-full rounded-2xl object-contain shadow-2xl">
+    </div>
+
+    <!-- TOAST -->
+    <div id="toast" class="fixed top-16 left-1/2 -translate-x-1/2 z-[70] bg-ink text-white text-xs font-medium px-4 py-2.5 rounded-full shadow-xl opacity-0 pointer-events-none transition-opacity duration-200 max-w-[90vw] text-center"></div>
+
+    <script>
+        // =========================================================================
+        // 1. CONSTANTES, UTILITAIRES & STOCKAGE INDEXEDDB + MIROIR LOCALSTORAGE
+        // =========================================================================
+        const STORAGE_KEY = 'vin_sur_vin_state_v1';
+        const IDB_NAME = 'VinSurVinDB';
+        const IDB_STORE = 'appStateStore';
+        const IDB_KEY = 'primaryState';
+        const CURRENT_YEAR = new Date().getFullYear();
+
+        function escapeHtml(str) {
+            return String(str ?? '')
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#39;');
+        }
+
+        function formatEuro(amount) {
+            const num = Math.round(Number(amount) || 0);
+            return num.toLocaleString('fr-FR') + ' €';
+        }
+
+        function showToast(message) {
+            const el = document.getElementById('toast');
+            if (!el) return;
+            el.textContent = message;
+            el.classList.remove('opacity-0');
+            el.classList.add('opacity-100');
+            clearTimeout(window._toastTimer);
+            window._toastTimer = setTimeout(() => {
+                el.classList.remove('opacity-100');
+                el.classList.add('opacity-0');
+            }, 3000);
+        }
+
+        function openModal(html) {
+            const overlay = document.getElementById('modal-overlay');
+            const box = document.getElementById('modal-box');
+            box.innerHTML = html;
+            overlay.classList.remove('hidden');
+            overlay.classList.add('flex');
+        }
+
+        function closeModal() {
+            const overlay = document.getElementById('modal-overlay');
+            overlay.classList.add('hidden');
+            overlay.classList.remove('flex');
+        }
+
+        function openPhotoZoom(src) {
+            if (!src) return;
+            document.getElementById('photo-zoom-img').src = src;
+            const ov = document.getElementById('photo-zoom-overlay');
+            ov.classList.remove('hidden');
+            ov.classList.add('flex');
+        }
+
+        function closePhotoZoom() {
+            const ov = document.getElementById('photo-zoom-overlay');
+            ov.classList.add('hidden');
+            ov.classList.remove('flex');
+        }
+
+        function openIndexedDB() {
+            return new Promise((resolve, reject) => {
+                if (!window.indexedDB) {
+                    reject(new Error('IndexedDB indisponible'));
+                    return;
+                }
+                const req = indexedDB.open(IDB_NAME, 1);
+                req.onupgradeneeded = (e) => {
+                    const db = e.target.result;
+                    if (!db.objectStoreNames.contains(IDB_STORE)) {
+                        db.createObjectStore(IDB_STORE);
+                    }
+                };
+                req.onsuccess = (e) => resolve(e.target.result);
+                req.onerror = (e) => reject(e.target.error);
+            });
+        }
+
+        async function readFromIndexedDB() {
+            try {
+                const db = await openIndexedDB();
+                return await new Promise((resolve, reject) => {
+                    const tx = db.transaction(IDB_STORE, 'readonly');
+                    const store = tx.objectStore(IDB_STORE);
+                    const req = store.get(IDB_KEY);
+                    req.onsuccess = () => resolve(req.result || null);
+                    req.onerror = () => reject(req.error);
+                });
+            } catch (_) {
+                return null;
+            }
+        }
+
+        async function writeToIndexedDB(payload) {
+            try {
+                const db = await openIndexedDB();
+                await new Promise((resolve, reject) => {
+                    const tx = db.transaction(IDB_STORE, 'readwrite');
+                    const store = tx.objectStore(IDB_STORE);
+                    const req = store.put(payload, IDB_KEY);
+                    req.onsuccess = () => resolve(true);
+                    req.onerror = () => reject(req.error);
+                });
+                return true;
+            } catch (_) {
+                return false;
+            }
+        }
+
+        // =========================================================================
+        // 2. DONNÉES INITIALES & ÉTAT GLOBAL
+        // =========================================================================
+        function createDefaultState() {
+            return {
+                activeTab: 'home',
+                apiKey: '',
+                cachedWorkingModel: '',
+                selectedCaveFilter: 'all',
+                selectedColorFilter: 'all',
+                searchQuery: '',
+                sortBy: 'maturity',
+                caves: [
+                    { id: 'cave_sc', name: 'Saint-Cloud', subtitle: 'Cave principale' },
+                    { id: 'cave_cq', name: 'Carqueiranne', subtitle: 'Cave d’été' }
+                ],
+                wines: [
+                    {
+                        id: 'wine_demo_1',
+                        name: 'Château Léoville Barton',
+                        domain: 'Famille Barton',
+                        vintage: 2016,
+                        color: 'Rouge',
+                        format: 'Bouteille',
+                        appellation: 'Saint-Julien (2e Cru Classé)',
+                        estimatedPrice: 115,
+                        parkerScore: '96/100',
+                        vivinoScore: '4.4/5',
+                        drinkFrom: 2024,
+                        drinkTo: 2042,
+                        notes: 'Grande structure tannique, cèdre et cassis noir. À carafer 2h avant service.',
+                        photo: ''
+                    },
+                    {
+                        id: 'wine_demo_2',
+                        name: 'Puligny-Montrachet 1er Cru Les Folatières',
+                        domain: 'Domaine Leflaive',
+                        vintage: 2020,
+                        color: 'Blanc',
+                        format: 'Bouteille',
+                        appellation: 'Puligny-Montrachet 1er Cru',
+                        estimatedPrice: 280,
+                        parkerScore: '95/100',
+                        vivinoScore: '4.6/5',
+                        drinkFrom: 2024,
+                        drinkTo: 2033,
+                        notes: 'Tension minérale remarquable, fleurs blanches et noisette grillée.',
+                        photo: ''
+                    },
+                    {
+                        id: 'wine_demo_3',
+                        name: 'Clos Cibonne Cuvée Spéciale des Vignettes',
+                        domain: 'Château Cibonne',
+                        vintage: 2022,
+                        color: 'Rosé',
+                        format: 'Bouteille',
+                        appellation: 'Côtes de Provence Cru Classé',
+                        estimatedPrice: 36,
+                        parkerScore: '92/100',
+                        vivinoScore: '4.2/5',
+                        drinkFrom: 2023,
+                        drinkTo: 2028,
+                        notes: 'Tibouren élevé sous voile, gastronomie méditerranéenne.',
+                        photo: ''
+                    },
+                    {
+                        id: 'wine_demo_4',
+                        name: 'Cristal Brut',
+                        domain: 'Champagne Louis Roederer',
+                        vintage: 2015,
+                        color: 'Champagne',
+                        format: 'Bouteille',
+                        appellation: 'Champagne',
+                        estimatedPrice: 295,
+                        parkerScore: '96/100',
+                        vivinoScore: '4.6/5',
+                        drinkFrom: 2024,
+                        drinkTo: 2038,
+                        notes: 'Bulle crayeuse d’une grande finesse, brioche fine et agrumes confits.',
+                        photo: ''
+                    }
+                ],
+                stockEntries: [
+                    { id: 'st_1', wineId: 'wine_demo_1', caveId: 'cave_sc', quantity: 6 },
+                    { id: 'st_2', wineId: 'wine_demo_2', caveId: 'cave_sc', quantity: 3 },
+                    { id: 'st_3', wineId: 'wine_demo_3', caveId: 'cave_cq', quantity: 6 },
+                    { id: 'st_4', wineId: 'wine_demo_4', caveId: 'cave_sc', quantity: 2 }
+                ],
+                historyEntries: [
+                    {
+                        id: 'hist_demo_1',
+                        date: '2025-12-24',
+                        reason: 'Bu / Dégusté',
+                        wineName: 'Château Lynch-Bages',
+                        vintage: 2015,
+                        color: 'Rouge',
+                        format: 'Bouteille',
+                        caveName: 'Saint-Cloud',
+                        quantity: 1,
+                        unitPrice: 135,
+                        parkerScore: '95/100',
+                        vivinoScore: '4.4/5',
+                        note: 'Réveillon de Noël — magnifique équilibre.'
+                    }
+                ],
+                chatMessages: [
+                    {
+                        role: 'assistant',
+                        text: 'Bonjour ! Je suis votre Sommelier personnel. Je connais chaque bouteille de vos caves de Saint-Cloud et Carqueiranne. Quel plat préparez-vous ou quelle bouteille souhaitez-vous ouvrir ?'
+                    }
+                ],
+                pendingScanBatch: null
+            };
+        }
+
+        function normalizeLoadedState(raw) {
+            const def = createDefaultState();
+            if (!raw || typeof raw !== 'object') return def;
+            const merged = { ...def, ...raw };
+            merged.caves = Array.isArray(raw.caves) && raw.caves.length ? raw.caves : def.caves;
+            merged.wines = Array.isArray(raw.wines) ? raw.wines.map(w => ({ ...w, format: w.format === 'Magnum' ? 'Magnum' : 'Bouteille' })) : def.wines;
+            merged.stockEntries = Array.isArray(raw.stockEntries) ? raw.stockEntries : def.stockEntries;
+            merged.historyEntries = Array.isArray(raw.historyEntries) ? raw.historyEntries.map(h => ({ ...h, format: h.format === 'Magnum' ? 'Magnum' : 'Bouteille' })) : def.historyEntries;
+            merged.chatMessages = Array.isArray(raw.chatMessages) && raw.chatMessages.length ? raw.chatMessages : def.chatMessages;
+            merged.pendingScanBatch = null;
+            return merged;
+        }
+
+        function loadInitialStateSync() {
+            try {
+                const rawStr = localStorage.getItem(STORAGE_KEY);
+                if (rawStr) return normalizeLoadedState(JSON.parse(rawStr));
+            } catch (_) {}
+            return createDefaultState();
+        }
+
+        let state = loadInitialStateSync();
+
+        function saveState() {
+            const cleanToSave = { ...state, pendingScanBatch: null };
+            writeToIndexedDB(cleanToSave);
+            try {
+                localStorage.setItem(STORAGE_KEY, JSON.stringify(cleanToSave));
+            } catch (_) {
+                try {
+                    const lightMirror = {
+                        ...cleanToSave,
+                        wines: cleanToSave.wines.map(w => ({ ...w, photo: '' }))
+                    };
+                    localStorage.setItem(STORAGE_KEY, JSON.stringify(lightMirror));
+                } catch (__) {}
+            }
+        }
+
+        // =========================================================================
+        // 3. MÉTRIQUES, MATURITÉ, OUVERTURE EN AVANCE & RÉPARTITION COULEURS
+        // =========================================================================
+        function getCaveName(caveId) {
+            const c = state.caves.find(x => x.id === caveId);
+            return c ? c.name : 'Saint-Cloud';
+        }
+
+        function getWineStockEntries(wineId) {
+            return state.stockEntries.filter(s => s.wineId === wineId && Number(s.quantity) > 0);
+        }
+
+        function getWineTotalBottles(wineId) {
+            return getWineStockEntries(wineId).reduce((acc, s) => acc + (Number(s.quantity) || 0), 0);
+        }
+
+        function getMaturityInfo(wine) {
+            const from = Number(wine.drinkFrom) || CURRENT_YEAR;
+            const to = Number(wine.drinkTo) || (from + 5);
+            if (CURRENT_YEAR > to) {
+                return {
+                    status: 'past',
+                    priority: 0,
+                    label: `À boire vite (avant ${to})`,
+                    badgeClass: 'bg-red-100 text-red-800 border-red-200'
+                };
+            }
+            if (CURRENT_YEAR >= from && CURRENT_YEAR <= to) {
+                const urgent = (to - CURRENT_YEAR) <= 1;
+                return {
+                    status: 'ready',
+                    priority: urgent ? 1 : 2,
+                    label: urgent ? `Apogée fin (${from}–${to})` : `À son apogée (${from}–${to})`,
+                    badgeClass: urgent ? 'bg-amber-100 text-amber-900 border-amber-200' : 'bg-emerald-100 text-emerald-800 border-emerald-200'
+                };
+            }
+            return {
+                status: 'young',
+                priority: 3,
+                label: `À garder (${from}–${to})`,
+                badgeClass: 'bg-stone-100 text-stone-700 border-stone-200'
+            };
+        }
+
+        function getOpeningAdvice(wine) {
+            const color = wine.color || 'Rouge';
+            const vintageNum = Number(wine.vintage) || 0;
+            const age = vintageNum > 0 ? Math.max(0, CURRENT_YEAR - vintageNum) : 0;
+            const appText = `${wine.appellation || ''} ${wine.name || ''} ${wine.domain || ''}`.toLowerCase();
+
+            if (color === 'Champagne') {
+                if (age >= 12 || appText.includes('millésimé') || appText.includes('cuvée')) {
+                    return {
+                        shortLabel: 'Ouvrir 10–15 min avant',
+                        detail: 'Laisser respirer 10 à 15 min dans un verre tulipe ou blanc à 10–12 °C ; éviter la carafe.'
+                    };
+                }
+                return {
+                    shortLabel: 'Ouvrir au service',
+                    detail: 'À ouvrir au moment du service à 8–10 °C sans ouverture prolongée.'
+                };
+            }
+
+            if (color === 'Rosé') {
+                return {
+                    shortLabel: 'Ouvrir au service',
+                    detail: 'À ouvrir au moment du service bien frais (8–10 °C).'
+                };
+            }
+
+            if (color === 'Blanc') {
+                const isRichWhite = age >= 6 || /bourgogne|meursault|puligny|chassagne|corton|pessac|hermitage|condrieu|grand cru|1er cru/i.test(appText);
+                if (isRichWhite) {
+                    return {
+                        shortLabel: 'Ouvrir 30–45 min avant',
+                        detail: 'Ouvrir 30 à 45 min avant (ou carafer doucement si très jeune) à 11–13 °C.'
+                    };
+                }
+                return {
+                    shortLabel: 'Ouvrir 10–15 min avant',
+                    detail: 'Ouvrir 10 à 15 min avant le service à 9–11 °C.'
+                };
+            }
+
+            const mat = getMaturityInfo(wine);
+            const isStructuredRed = /bordeaux|pauillac|saint-julien|margaux|saint-estèphe|pomerol|saint-émilion|pessac|rhône|côte-rôtie|hermitage|cornas|châteauneuf|barolo|rioja reserva|gran reserva/i.test(appText);
+
+            if (mat.status === 'past' || age >= 18) {
+                return {
+                    shortLabel: 'Ouvrir 30–45 min avant (sans carafe)',
+                    detail: 'Vin mature/évolué : ouvrir 30 à 45 min avant et servir délicatement sans brusquer ni carafer longuement.'
+                };
+            }
+            if (isStructuredRed && age <= 10) {
+                return {
+                    shortLabel: 'Carafer / Ouvrir 1h30–2h avant',
+                    detail: 'Rouge structuré encore jeune : ouvrir 1h30 à 2h avant ou carafer pour assouplir les tanins.'
+                };
+            }
+            if (age <= 4) {
+                return {
+                    shortLabel: 'Ouvrir 45–60 min avant',
+                    detail: 'Rouge fruité/jeune : ouvrir 45 à 60 min avant ou passer en carafe 30 min pour l’aérer.'
+                };
+            }
+            return {
+                shortLabel: 'Ouvrir 1h avant',
+                detail: 'Ouvrir environ 1h avant le service (carafage léger si dépôt) à 16–17 °C.'
+            };
+        }
+
+        function getColorDotHtml(color) {
+            const map = {
+                'Rouge': 'bg-[#7A1626]',
+                'Blanc': 'bg-[#E5C158]',
+                'Rosé': 'bg-[#F29CA3]',
+                'Champagne': 'bg-[#D6B872] ring-1 ring-amber-500/40'
+            };
+            return `<span class="inline-block w-2.5 h-2.5 rounded-full ${map[color] || 'bg-stone-400'} shrink-0"></span>`;
+        }
+
+        function getFormatBadgeHtml(format) {
+            if (format === 'Magnum') {
+                return `<span class="inline-flex items-center px-1.5 py-0.5 rounded-md bg-amber-100/90 text-amber-950 border border-amber-300/80 text-[10px] font-bold tracking-tight shrink-0">Magnum</span>`;
+            }
+            return '';
+        }
+
+        function computeCellarBreakdown(caveId = null) {
+            const counts = { Rouge: 0, Blanc: 0, Rosé: 0, Champagne: 0, total: 0, value: 0 };
+            state.stockEntries.forEach(st => {
+                const qty = Number(st.quantity) || 0;
+                if (qty <= 0) return;
+                if (caveId && st.caveId !== caveId) return;
+                const wine = state.wines.find(w => w.id === st.wineId);
+                if (!wine) return;
+                counts.total += qty;
+                counts.value += qty * (Number(wine.estimatedPrice) || 0);
+                if (counts[wine.color] !== undefined) {
+                    counts[wine.color] += qty;
+                } else {
+                    counts.Rouge += qty;
+                }
+            });
+            return counts;
+        }
+
+        function updateApiStatusDot() {
+            const dot = document.getElementById('api-status-dot');
+            if (!dot) return;
+            if ((state.apiKey || '').trim().length > 10) {
+                dot.className = 'w-2.5 h-2.5 rounded-full bg-emerald-500 border-2 border-cream absolute -top-0.5 -right-0.5';
+            } else {
+                dot.className = 'w-2.5 h-2.5 rounded-full bg-amber-500 border-2 border-cream absolute -top-0.5 -right-0.5';
+            }
+        }
+
+        // =========================================================================
+        // 4. NAVIGATION & RENDU PRINCIPAL
+        // =========================================================================
+        function switchTab(tab, caveFilter = null) {
+            state.activeTab = tab;
+            if (caveFilter !== null) {
+                state.selectedCaveFilter = caveFilter;
+            }
+            saveState();
+            renderApp();
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function renderApp() {
+            updateApiStatusDot();
+            const tabs = ['home', 'cellar', 'sommelier', 'history'];
+            tabs.forEach(t => {
+                const btn = document.getElementById(`nav-${t}`);
+                if (!btn) return;
+                const icon = btn.querySelector('i');
+                const label = btn.querySelector('span');
+                const isActive = state.activeTab === t;
+                btn.className = `nav-btn flex flex-col items-center gap-0.5 py-1.5 ${isActive ? 'text-bordeaux' : 'text-inkmuted'}`;
+                if (icon) {
+                    icon.className = icon.className.replace('ph-fill', 'ph');
+                    if (isActive) icon.className = icon.className.replace('ph ', 'ph-fill ');
+                }
+                if (label) {
+                    label.className = `text-[10px] ${isActive ? 'font-semibold' : 'font-medium'}`;
+                }
+            });
+
+            const container = document.getElementById('app-content');
+            if (state.activeTab === 'home') {
+                container.innerHTML = renderHomeTab();
+            } else if (state.activeTab === 'cellar') {
+                container.innerHTML = renderCellarTab();
+            } else if (state.activeTab === 'sommelier') {
+                container.innerHTML = renderSommelierTab();
+                scrollChatToBottom();
+            } else if (state.activeTab === 'history') {
+                container.innerHTML = renderHistoryTab();
+            }
+        }
+
+        // =========================================================================
+        // 5. ONGLET ACCUEIL
+        // =========================================================================
+        function renderHomeTab() {
+            const globalStats = computeCellarBreakdown(null);
+            const hasKey = (state.apiKey || '').trim().length > 10;
+
+            const readyWines = state.wines
+                .map(w => ({ wine: w, total: getWineTotalBottles(w.id), mat: getMaturityInfo(w) }))
+                .filter(item => item.total > 0 && (item.mat.status === 'ready' || item.mat.status === 'past'))
+                .sort((a, b) => a.mat.priority - b.mat.priority)
+                .slice(0, 4);
+
+            const cavesCardsHtml = state.caves.map(cave => {
+                const st = computeCellarBreakdown(cave.id);
+                return `
+                    <button onclick="switchTab('cellar', '${cave.id}')" class="w-full text-left bg-card border border-borderline rounded-2xl p-4 shadow-xs active:scale-[0.99] transition">
+                        <div class="flex items-start justify-between gap-2 mb-3">
+                            <div>
+                                <div class="flex items-center gap-1.5">
+                                    <i class="ph-fill ph-map-pin text-bordeaux text-base"></i>
+                                    <h3 class="font-serif text-xl font-bold text-ink leading-tight">${escapeHtml(cave.name)}</h3>
+                                </div>
+                                <p class="text-xs text-inkmuted mt-0.5">${escapeHtml(cave.subtitle || '')}</p>
+                            </div>
+                            <div class="text-right">
+                                <span class="text-lg font-bold text-bordeaux">${st.total}</span>
+                                <span class="text-[11px] text-inkmuted block">bouteille${st.total > 1 ? 's' : ''}</span>
+                                <span class="text-xs font-semibold text-gold-dark block mt-0.5">${formatEuro(st.value)}</span>
+                            </div>
+                        </div>
+                        <div class="grid grid-cols-2 sm:grid-cols-4 gap-1.5 pt-2.5 border-t border-borderline/70 text-[11px]">
+                            <div class="bg-sand/70 rounded-lg px-2 py-1.5 flex items-center justify-between gap-1">
+                                <span class="flex items-center gap-1 text-inkmuted">${getColorDotHtml('Rouge')} R</span>
+                                <span class="font-bold text-ink">${st.Rouge}</span>
+                            </div>
+                            <div class="bg-sand/70 rounded-lg px-2 py-1.5 flex items-center justify-between gap-1">
+                                <span class="flex items-center gap-1 text-inkmuted">${getColorDotHtml('Blanc')} B</span>
+                                <span class="font-bold text-ink">${st.Blanc}</span>
+                            </div>
+                            <div class="bg-sand/70 rounded-lg px-2 py-1.5 flex items-center justify-between gap-1">
+                                <span class="flex items-center gap-1 text-inkmuted">${getColorDotHtml('Rosé')} Ro</span>
+                                <span class="font-bold text-ink">${st.Rosé}</span>
+                            </div>
+                            <div class="bg-sand/70 rounded-lg px-2 py-1.5 flex items-center justify-between gap-1">
+                                <span class="flex items-center gap-1 text-inkmuted">${getColorDotHtml('Champagne')} Ch</span>
+                                <span class="font-bold text-ink">${st.Champagne}</span>
+                            </div>
+                        </div>
+                    </button>
+                `;
+            }).join('');
+
+            return `
+                ${!hasKey ? `
+                    <div class="bg-amber-50 border border-amber-200 rounded-2xl p-3.5 flex items-center justify-between gap-3">
+                        <div class="flex items-start gap-2.5">
+                            <i class="ph-fill ph-key text-amber-600 text-xl shrink-0 mt-0.5"></i>
+                            <div class="text-xs text-amber-950">
+                                <p class="font-semibold">Clé API Gemini requise pour le scan & le Sommelier</p>
+                                <p class="text-amber-800 mt-0.5">Configurez votre clé Google AI Studio en 10 secondes.</p>
+                            </div>
+                        </div>
+                        <button onclick="openSettingsModal()" class="px-3 py-2 rounded-xl bg-bordeaux text-white text-xs font-semibold shrink-0">Configurer</button>
+                    </div>
+                ` : ''}
+
+                <!-- CARTE PATRIMOINE GLOBAL -->
+                <section class="bg-gradient-to-br from-bordeaux via-[#59101C] to-[#3B0A12] text-white rounded-3xl p-5 shadow-lg relative overflow-hidden">
+                    <div class="absolute -right-8 -top-8 w-36 h-36 rounded-full bg-gold/10 pointer-events-none"></div>
+                    <div class="flex items-center justify-between mb-4">
+                        <span class="text-xs uppercase tracking-widest text-gold font-semibold">Patrimoine Consolidé</span>
+                        <span class="text-[11px] bg-white/10 px-2.5 py-1 rounded-full text-white/90">${state.caves.length} caves</span>
+                    </div>
+                    <div class="grid grid-cols-2 gap-4 pb-4 border-b border-white/15">
+                        <div>
+                            <p class="text-xs text-white/70">Total bouteilles</p>
+                            <p class="font-serif text-4xl font-bold mt-0.5">${globalStats.total}</p>
+                        </div>
+                        <div>
+                            <p class="text-xs text-white/70">Valeur estimée</p>
+                            <p class="font-serif text-3xl font-bold text-gold mt-1">${formatEuro(globalStats.value)}</p>
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-4 gap-2 pt-3.5 text-center">
+                        <button onclick="state.selectedColorFilter='Rouge'; switchTab('cellar', 'all')" class="bg-white/10 hover:bg-white/15 rounded-xl py-2 px-1 transition">
+                            <div class="flex items-center justify-center gap-1 text-[11px] text-white/80">${getColorDotHtml('Rouge')} Rouge</div>
+                            <p class="text-sm font-bold mt-0.5">${globalStats.Rouge}</p>
+                        </button>
+                        <button onclick="state.selectedColorFilter='Blanc'; switchTab('cellar', 'all')" class="bg-white/10 hover:bg-white/15 rounded-xl py-2 px-1 transition">
+                            <div class="flex items-center justify-center gap-1 text-[11px] text-white/80">${getColorDotHtml('Blanc')} Blanc</div>
+                            <p class="text-sm font-bold mt-0.5">${globalStats.Blanc}</p>
+                        </button>
+                        <button onclick="state.selectedColorFilter='Rosé'; switchTab('cellar', 'all')" class="bg-white/10 hover:bg-white/15 rounded-xl py-2 px-1 transition">
+                            <div class="flex items-center justify-center gap-1 text-[11px] text-white/80">${getColorDotHtml('Rosé')} Rosé</div>
+                            <p class="text-sm font-bold mt-0.5">${globalStats.Rosé}</p>
+                        </button>
+                        <button onclick="state.selectedColorFilter='Champagne'; switchTab('cellar', 'all')" class="bg-white/10 hover:bg-white/15 rounded-xl py-2 px-1 transition">
+                            <div class="flex items-center justify-center gap-1 text-[11px] text-white/80">${getColorDotHtml('Champagne')} Bulles</div>
+                            <p class="text-sm font-bold mt-0.5">${globalStats.Champagne}</p>
+                        </button>
+                    </div>
+                </section>
+
+                <!-- ACTIONS RAPIDES -->
+                <section class="grid grid-cols-2 gap-3">
+                    <button onclick="openScanChoiceModal()" class="bg-card border border-borderline rounded-2xl p-3.5 flex items-center gap-3 shadow-xs active:scale-98 transition text-left">
+                        <div class="w-10 h-10 rounded-xl bg-bordeaux/10 text-bordeaux flex items-center justify-center shrink-0">
+                            <i class="ph-bold ph-camera text-xl"></i>
+                        </div>
+                        <div>
+                            <p class="text-xs font-bold text-ink">Scanner photo</p>
+                            <p class="text-[11px] text-inkmuted">1 ou plusieurs vins</p>
+                        </div>
+                    </button>
+                    <button onclick="openAddManualWineModal()" class="bg-card border border-borderline rounded-2xl p-3.5 flex items-center gap-3 shadow-xs active:scale-98 transition text-left">
+                        <div class="w-10 h-10 rounded-xl bg-gold/15 text-gold-dark flex items-center justify-center shrink-0">
+                            <i class="ph-bold ph-plus-circle text-xl"></i>
+                        </div>
+                        <div>
+                            <p class="text-xs font-bold text-ink">Ajout manuel</p>
+                            <p class="text-[11px] text-inkmuted">Saisie rapide</p>
+                        </div>
+                    </button>
+                </section>
+
+                <!-- MES CAVES -->
+                <section class="space-y-2.5">
+                    <div class="flex items-center justify-between">
+                        <h2 class="font-serif text-xl font-bold text-ink">Mes Caves</h2>
+                        <button onclick="switchTab('cellar', 'all')" class="text-xs font-semibold text-bordeaux">Tout voir →</button>
+                    </div>
+                    <div class="space-y-3">
+                        ${cavesCardsHtml}
+                    </div>
+                </section>
+
+                <!-- VINS À MATURITÉ -->
+                <section class="space-y-2.5">
+                    <div class="flex items-center justify-between">
+                        <h2 class="font-serif text-xl font-bold text-ink">À déguster maintenant</h2>
+                        <span class="text-[11px] text-inkmuted">Apogée ${CURRENT_YEAR}</span>
+                    </div>
+                    ${readyWines.length === 0 ? `
+                        <div class="bg-card border border-borderline rounded-2xl p-4 text-xs text-inkmuted text-center">
+                            Aucune bouteille en fenêtre d'apogée urgente actuellement.
+                        </div>
+                    ` : `
+                        <div class="space-y-2">
+                            ${readyWines.map(({ wine, total, mat }) => `
+                                <div onclick="openWineDetailModal('${wine.id}')" class="bg-card border border-borderline rounded-2xl p-3.5 flex items-center justify-between gap-3 shadow-xs active:bg-sand/40 cursor-pointer">
+                                    <div class="min-w-0">
+                                        <div class="flex items-center gap-1.5 flex-wrap">
+                                            ${getColorDotHtml(wine.color)}
+                                            <p class="text-sm font-bold text-ink truncate">${escapeHtml(wine.name)}</p>
+                                            ${getFormatBadgeHtml(wine.format)}
+                                        </div>
+                                        <p class="text-xs text-inkmuted truncate mt-0.5">${escapeHtml(wine.vintage || 'NV')} • ${escapeHtml(wine.appellation || wine.domain || '')}</p>
+                                        <span class="inline-block mt-1.5 text-[10px] font-semibold px-2 py-0.5 rounded-full border ${mat.badgeClass}">${mat.label}</span>
+                                    </div>
+                                    <div class="text-right shrink-0">
+                                        <span class="text-sm font-bold text-bordeaux">${total} btl</span>
+                                        <span class="block text-[11px] text-inkmuted">${formatEuro(wine.estimatedPrice)}/u</span>
+                                    </div>
+                                </div>
+                            `).join('')}
+                        </div>
+                    `}
+                </section>
+            `;
+        }
+
+        // =========================================================================
+        // 6. ONGLET MA CAVE
+        // =========================================================================
+        function renderCellarTab() {
+            const q = (state.searchQuery || '').trim().toLowerCase();
+            const caveFilter = state.selectedCaveFilter || 'all';
+            const colorFilter = state.selectedColorFilter || 'all';
+
+            let items = state.wines.map(wine => {
+                const entries = getWineStockEntries(wine.id);
+                const filteredEntries = caveFilter === 'all' ? entries : entries.filter(e => e.caveId === caveFilter);
+                const qty = filteredEntries.reduce((sum, e) => sum + (Number(e.quantity) || 0), 0);
+                return { wine, entries, filteredEntries, qty, mat: getMaturityInfo(wine) };
+            }).filter(item => item.qty > 0);
+
+            if (colorFilter !== 'all') {
+                items = items.filter(item => item.wine.color === colorFilter);
+            }
+
+            if (q) {
+                items = items.filter(({ wine }) => {
+                    const hay = `${wine.name} ${wine.domain} ${wine.appellation} ${wine.vintage} ${wine.color} ${wine.format || ''} ${wine.notes}`.toLowerCase();
+                    return hay.includes(q);
+                });
+            }
+
+            items.sort((a, b) => {
+                if (state.sortBy === 'price_desc') return (Number(b.wine.estimatedPrice) || 0) - (Number(a.wine.estimatedPrice) || 0);
+                if (state.sortBy === 'vintage_asc') return (Number(a.wine.vintage) || 9999) - (Number(b.wine.vintage) || 9999);
+                if (state.sortBy === 'name_asc') return (a.wine.name || '').localeCompare(b.wine.name || '', 'fr');
+                return a.mat.priority - b.mat.priority;
+            });
+
+            const totalShown = items.reduce((acc, i) => acc + i.qty, 0);
+            const totalValueShown = items.reduce((acc, i) => acc + i.qty * (Number(i.wine.estimatedPrice) || 0), 0);
+
+            const colors = ['all', 'Rouge', 'Blanc', 'Rosé', 'Champagne'];
+
+            return `
+                <!-- BARRE DE RECHERCHE & TRI -->
+                <div class="space-y-2.5">
+                    <div class="flex flex-col sm:flex-row gap-2">
+                        <div class="relative flex-1 min-w-0">
+                            <i class="ph ph-magnifying-glass text-inkmuted absolute left-3.5 top-1/2 -translate-y-1/2"></i>
+                            <input type="text" value="${escapeHtml(state.searchQuery)}" oninput="state.searchQuery=this.value; renderApp();" placeholder="Château, millésime, appellation..." class="w-full bg-card border border-borderline rounded-2xl pl-9 pr-8 py-2.5 text-sm focus:outline-none focus:border-bordeaux">
+                            ${q ? `<button onclick="state.searchQuery=''; renderApp();" class="absolute right-2.5 top-1/2 -translate-y-1/2 text-inkmuted text-xs p-1">✕</button>` : ''}
+                        </div>
+                        <select onchange="state.sortBy=this.value; saveState(); renderApp();" class="bg-card border border-borderline rounded-2xl px-3 py-2.5 text-xs font-semibold text-ink focus:outline-none shrink-0">
+                            <option value="maturity" ${state.sortBy === 'maturity' ? 'selected' : ''}>Tri : Apogée</option>
+                            <option value="price_desc" ${state.sortBy === 'price_desc' ? 'selected' : ''}>Tri : Prix ↓</option>
+                            <option value="vintage_asc" ${state.sortBy === 'vintage_asc' ? 'selected' : ''}>Tri : Millésime ↑</option>
+                            <option value="name_asc" ${state.sortBy === 'name_asc' ? 'selected' : ''}>Tri : Nom A–Z</option>
+                        </select>
+                    </div>
+
+                    <!-- FILTRE CAVES -->
+                    <div class="flex gap-1.5 overflow-x-auto no-scrollbar pb-0.5">
+                        <button onclick="state.selectedCaveFilter='all'; saveState(); renderApp();" class="px-3.5 py-1.5 rounded-full text-xs font-semibold shrink-0 transition ${caveFilter === 'all' ? 'bg-bordeaux text-white' : 'bg-card border border-borderline text-inkmuted'}">
+                            Toutes les caves
+                        </button>
+                        ${state.caves.map(c => `
+                            <button onclick="state.selectedCaveFilter='${c.id}'; saveState(); renderApp();" class="px-3.5 py-1.5 rounded-full text-xs font-semibold shrink-0 transition ${caveFilter === c.id ? 'bg-bordeaux text-white' : 'bg-card border border-borderline text-inkmuted'}">
+                                ${escapeHtml(c.name)}
+                            </button>
+                        `).join('')}
+                    </div>
+
+                    <!-- FILTRE COULEURS -->
+                    <div class="flex gap-1.5 overflow-x-auto no-scrollbar pb-0.5">
+                        ${colors.map(col => `
+                            <button onclick="state.selectedColorFilter='${col}'; saveState(); renderApp();" class="px-3 py-1.5 rounded-full text-xs font-medium shrink-0 flex items-center gap-1.5 transition ${colorFilter === col ? 'bg-ink text-white' : 'bg-sand/80 text-ink'}">
+                                ${col !== 'all' ? getColorDotHtml(col) : ''}
+                                <span>${col === 'all' ? 'Toutes couleurs' : col}</span>
+                            </button>
+                        `).join('')}
+                    </div>
+
+                    <!-- RÉSUMÉ SÉLECTION -->
+                    <div class="flex items-center justify-between text-xs text-inkmuted px-1">
+                        <span><strong class="text-ink">${totalShown}</strong> bouteille${totalShown > 1 ? 's' : ''} (${items.length} réf.)</span>
+                        <span>Valeur : <strong class="text-gold-dark">${formatEuro(totalValueShown)}</strong></span>
+                    </div>
+                </div>
+
+                <!-- LISTE DES VINS -->
+                <div class="space-y-3">
+                    ${items.length === 0 ? `
+                        <div class="bg-card border border-borderline rounded-3xl p-8 text-center space-y-3">
+                            <i class="ph ph-wine text-4xl text-inkmuted/50"></i>
+                            <p class="text-sm font-semibold text-ink">Aucune bouteille trouvée</p>
+                            <p class="text-xs text-inkmuted">Modifiez vos filtres ou scannez une nouvelle étiquette.</p>
+                            <button onclick="openScanChoiceModal()" class="px-4 py-2.5 rounded-xl bg-bordeaux text-white text-xs font-semibold">Scanner une bouteille</button>
+                        </div>
+                    ` : items.map(({ wine, filteredEntries, qty, mat }) => {
+                        const opening = getOpeningAdvice(wine);
+                        return `
+                        <article class="bg-card border border-borderline rounded-2xl p-3.5 shadow-xs space-y-3">
+                            <div onclick="openWineDetailModal('${wine.id}')" class="flex gap-3 cursor-pointer">
+                                ${wine.photo ? `
+                                    <img src="${wine.photo}" alt="${escapeHtml(wine.name)}" class="w-16 h-20 rounded-xl object-cover border border-borderline shrink-0 bg-sand">
+                                ` : `
+                                    <div class="w-16 h-20 rounded-xl bg-sand border border-borderline flex flex-col items-center justify-center shrink-0 text-bordeaux">
+                                        <i class="ph-fill ph-wine text-2xl"></i>
+                                        <span class="text-[10px] font-bold mt-0.5">${escapeHtml(wine.vintage || 'NV')}</span>
+                                    </div>
+                                `}
+                                <div class="flex-1 min-w-0">
+                                    <div class="flex items-start justify-between gap-2">
+                                        <div class="flex items-center gap-1.5 min-w-0 flex-wrap">
+                                            ${getColorDotHtml(wine.color)}
+                                            <h3 class="text-sm font-bold text-ink leading-snug truncate">${escapeHtml(wine.name)}</h3>
+                                            ${getFormatBadgeHtml(wine.format)}
+                                        </div>
+                                        <span class="px-2 py-0.5 rounded-lg bg-bordeaux/10 text-bordeaux text-xs font-bold shrink-0">×${qty}</span>
+                                    </div>
+                                    <p class="text-xs text-inkmuted truncate mt-0.5">
+                                        <strong class="text-ink">${escapeHtml(wine.vintage || 'NV')}</strong> • ${escapeHtml(wine.appellation || wine.domain || 'Appellation non précisée')}
+                                    </p>
+                                    <div class="flex flex-wrap items-center gap-1.5 mt-2">
+                                        <span class="text-[10px] font-semibold px-2 py-0.5 rounded-full border ${mat.badgeClass}">${mat.label}</span>
+                                        <span class="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-sand text-ink">${formatEuro(wine.estimatedPrice)}/u</span>
+                                        ${wine.parkerScore ? `<span class="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-amber-50 text-amber-900 border border-amber-200">RP ${escapeHtml(wine.parkerScore)}</span>` : ''}
+                                        ${wine.vivinoScore ? `<span class="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-rose-50 text-rose-900 border border-rose-200">Vivino ${escapeHtml(wine.vivinoScore)}</span>` : ''}
+                                    </div>
+                                    <div class="mt-2 flex items-center gap-1.5 text-[11px] text-inkmuted">
+                                        <i class="ph-fill ph-clock text-bordeaux text-xs shrink-0"></i>
+                                        <span class="font-medium text-ink">${escapeHtml(opening.shortLabel)}</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- RÉPARTITION PAR CAVE & ACTIONS RAPIDES -->
+                            <div class="pt-2.5 border-t border-borderline/70 flex items-center justify-between gap-2 flex-wrap">
+                                <div class="flex flex-wrap gap-1.5">
+                                    ${filteredEntries.map(st => `
+                                        <span class="inline-flex items-center gap-1 text-[11px] bg-sand px-2.5 py-1 rounded-lg text-ink font-medium">
+                                            <i class="ph-fill ph-map-pin text-bordeaux text-xs"></i>
+                                            ${escapeHtml(getCaveName(st.caveId))} : <strong>${st.quantity}</strong>
+                                        </span>
+                                    `).join('')}
+                                </div>
+                                <div class="flex items-center gap-1.5">
+                                    <button onclick="openConsumeWineModal('${wine.id}')" class="px-2.5 py-1.5 rounded-xl bg-bordeaux text-white text-[11px] font-semibold active:scale-95 transition">
+                                        Sortir / Boire
+                                    </button>
+                                    <button onclick="quickIncrementStock('${wine.id}')" title="Ajouter 1 bouteille" class="w-8 h-8 rounded-xl bg-sand border border-borderline text-ink font-bold text-sm flex items-center justify-center active:scale-95 transition">
+                                        +1
+                                    </button>
+                                </div>
+                            </div>
+                        </article>
+                    `;}).join('')}
+                </div>
+            `;
+        }
+
+        // =========================================================================
+        // 7. ONGLET SOMMELIER IA
+        // =========================================================================
+        function renderSommelierTab() {
+            const suggestions = [
+                'Quel vin ouvrir ce soir avec une côte de bœuf ?',
+                'Quelles bouteilles sont à leur apogée urgente ?',
+                'Que me conseilles-tu à Carqueiranne pour un poisson grillé ?',
+                'Quelle est la bouteille la plus prestigieuse de ma cave ?'
+            ];
+
+            return `
+                <div class="flex flex-col h-[calc(100dvh-165px)] min-h-[430px]">
+                    <div class="bg-card border border-borderline rounded-2xl p-3 mb-3 flex items-center justify-between gap-2">
+                        <div class="flex items-center gap-2.5">
+                            <div class="w-9 h-9 rounded-xl bg-bordeaux text-gold flex items-center justify-center shrink-0">
+                                <i class="ph-fill ph-sparkle text-lg"></i>
+                            </div>
+                            <div>
+                                <h2 class="text-sm font-bold text-ink">Sommelier Personnel IA</h2>
+                                <p class="text-[11px] text-inkmuted">Connecté à vos caves & dégustations</p>
+                            </div>
+                        </div>
+                        <button onclick="resetSommelierChat()" class="text-[11px] font-semibold text-inkmuted hover:text-bordeaux px-2.5 py-1.5 rounded-xl bg-sand">
+                            Effacer
+                        </button>
+                    </div>
+
+                    <!-- ZONE DE MESSAGES -->
+                    <div id="chat-messages-box" class="flex-1 overflow-y-auto space-y-3 pr-1 pb-2">
+                        ${state.chatMessages.map(msg => `
+                            <div class="flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}">
+                                <div class="max-w-[85%] rounded-2xl px-3.5 py-2.5 text-xs leading-relaxed shadow-xs whitespace-pre-line ${
+                                    msg.role === 'user'
+                                        ? 'bg-bordeaux text-white rounded-br-sm'
+                                        : 'bg-card border border-borderline text-ink rounded-bl-sm'
+                                }">${escapeHtml(msg.text)}</div>
+                            </div>
+                        `).join('')}
+                    </div>
+
+                    <!-- SUGGESTIONS RAPIDES -->
+                    <div class="flex gap-1.5 overflow-x-auto no-scrollbar py-2">
+                        ${suggestions.map(s => `
+                            <button onclick="sendSommelierMessage('${escapeHtml(s).replace(/'/g, "\\'")}')" class="px-3 py-1.5 rounded-full bg-sand border border-borderline text-[11px] text-ink whitespace-nowrap shrink-0 active:scale-95 transition">
+                                ${escapeHtml(s)}
+                            </button>
+                        `).join('')}
+                    </div>
+
+                    <!-- BARRE DE SAISIE -->
+                    <form onsubmit="event.preventDefault(); const inp = document.getElementById('sommelier-input'); sendSommelierMessage(inp.value); inp.value='';" class="flex items-center gap-2 pt-1">
+                        <button type="button" onclick="startVoiceInput()" title="Dicter" class="w-10 h-10 rounded-2xl bg-sand border border-borderline text-ink flex items-center justify-center shrink-0 active:scale-95">
+                            <i class="ph ph-microphone text-lg"></i>
+                        </button>
+                        <input id="sommelier-input" type="text" placeholder="Demandez un accord mets-vins..." class="flex-1 bg-card border border-borderline rounded-2xl px-3.5 py-2.5 text-sm focus:outline-none focus:border-bordeaux">
+                        <button type="submit" class="w-10 h-10 rounded-2xl bg-bordeaux text-white flex items-center justify-center shrink-0 active:scale-95">
+                            <i class="ph-bold ph-paper-plane-right text-base"></i>
+                        </button>
+                    </form>
+                </div>
+            `;
+        }
+
+        function scrollChatToBottom() {
+            setTimeout(() => {
+                const box = document.getElementById('chat-messages-box');
+                if (box) box.scrollTop = box.scrollHeight;
+            }, 40);
+        }
+
+        function resetSommelierChat() {
+            state.chatMessages = [
+                {
+                    role: 'assistant',
+                    text: 'Conversation réinitialisée. Que souhaitez-vous déguster ou quel plat préparez-vous ?'
+                }
+            ];
+            saveState();
+            renderApp();
+        }
+
+        function startVoiceInput() {
+            const SpeechRec = window.SpeechRecognition || window.webkitSpeechRecognition;
+            if (!SpeechRec) {
+                showToast('Dictée vocale non supportée sur ce navigateur.');
+                return;
+            }
+            const rec = new SpeechRec();
+            rec.lang = 'fr-FR';
+            rec.interimResults = false;
+            showToast('Parlez maintenant...');
+            rec.onresult = (e) => {
+                const transcript = e.results[0][0].transcript;
+                const inp = document.getElementById('sommelier-input');
+                if (inp) inp.value = transcript;
+            };
+            rec.onerror = () => showToast('Impossible de capter la voix.');
+            rec.start();
+        }
+
+        async function sendSommelierMessage(rawText) {
+            const text = (rawText || '').trim();
+            if (!text) return;
+
+            if (!(state.apiKey || '').trim()) {
+                openSettingsModal();
+                showToast('Veuillez renseigner votre clé API Gemini.');
+                return;
+            }
+
+            state.chatMessages.push({ role: 'user', text });
+            state.chatMessages.push({ role: 'assistant', text: '🍷 Consultation de vos caves et notes de dégustation en cours...' });
+            renderApp();
+
+            try {
+                const inventoryLines = state.wines.map(w => {
+                    const entries = getWineStockEntries(w.id);
+                    const total = entries.reduce((a, b) => a + (Number(b.quantity) || 0), 0);
+                    if (total <= 0) return null;
+                    const loc = entries.map(e => `${getCaveName(e.caveId)}: ${e.quantity}`).join(', ');
+                    const mat = getMaturityInfo(w);
+                    const opening = getOpeningAdvice(w);
+                    const formatTag = w.format === 'Magnum' ? ' [MAGNUM 1,5L]' : '';
+                    return `- ${w.name}${formatTag} (${w.vintage || 'NV'}) | ${w.color} | ${w.appellation || w.domain || ''} | Stock total: ${total} (${loc}) | Prix: ${w.estimatedPrice}€ | Statut (${CURRENT_YEAR}): ${mat.label} | Service: ${opening.shortLabel} | RP: ${w.parkerScore || 'N/A'} | Vivino: ${w.vivinoScore || 'N/A'}${w.notes ? ` | Note perso: "${w.notes}"` : ''}`;
+                }).filter(Boolean).join('\n');
+
+                const recentHistoryLines = (state.historyEntries || []).slice(0, 12).map(h =>
+                    `- ${h.date} : ${h.quantity}x ${h.wineName} (${h.format || 'Bouteille'}, ${h.vintage || 'NV'}, ${h.color}) [${h.reason}] depuis ${h.caveName}${h.note ? ` — "${h.note}"` : ''}`
+                ).join('\n');
+
+                const systemPrompt = `Tu es un chef sommelier étoilé français, chaleureux, concis et interactif, agissant comme l'agent sommelier personnel de l'utilisateur.
+Nous sommes en ${CURRENT_YEAR}.
+
+INVENTAIRE ACTUEL EN CAVE (Saint-Cloud & Carqueiranne) :
+${inventoryLines || 'Aucune bouteille en cave actuellement.'}
+
+DERNIÈRES DÉGUSTATIONS & SORTIES (MÉMOIRE DES GOÛTS) :
+${recentHistoryLines || 'Aucun historique enregistré.'}
+
+RÈGLES D'AGENT CONVERSATIONNEL :
+1. Tiens rigoureusement compte de tout l'historique de cette conversation : ne propose jamais deux fois une bouteille que l'utilisateur a écartée, et adapte immédiatement tes suggestions selon ses retours (nombre de convives, plat, budget, cave où il se trouve : Saint-Cloud ou Carqueiranne, envie de Magnum ou bouteille).
+2. Recommande en priorité des bouteilles réellement disponibles dans ses caves (en précisant le nom exact, le format Magnum si applicable, le millésime, la cave où elle se trouve, son statut d'apogée et le temps d'ouverture/carafage recommandé).
+3. Si une bouteille évoque une dégustation passée de son historique, mentionne-le naturellement.
+4. Termine toujours par une courte question ciblée et utile pour affiner la suite avec lui (ex. accord précis, cave où il dîne, ou envie d'une alternative).
+5. Réponds en français élégant, structuré avec des puces claires et sans blabla inutile.`;
+
+                const rawRecent = state.chatMessages.slice(0, -1).slice(-20);
+                const firstUserIdx = rawRecent.findIndex(m => m.role === 'user');
+                const validSlice = firstUserIdx >= 0 ? rawRecent.slice(firstUserIdx) : [];
+
+                const contents = [];
+                validSlice.forEach(m => {
+                    const geminiRole = m.role === 'user' ? 'user' : 'model';
+                    if (contents.length > 0 && contents[contents.length - 1].role === geminiRole) {
+                        contents[contents.length - 1].parts[0].text += '\n\n' + m.text;
+                    } else {
+                        contents.push({
+                            role: geminiRole,
+                            parts: [{ text: m.text }]
+                        });
+                    }
+                });
+
+                const reply = await callGeminiChat(systemPrompt, contents);
+                state.chatMessages[state.chatMessages.length - 1] = { role: 'assistant', text: reply };
+            } catch (err) {
+                state.chatMessages[state.chatMessages.length - 1] = {
+                    role: 'assistant',
+                    text: `Désolé, impossible de joindre le Sommelier IA : ${err.message || 'erreur réseau'}.`
+                };
+            }
+            saveState();
+            renderApp();
+        }
+
+        // =========================================================================
+        // 8. ONGLET HISTORIQUE
+        // =========================================================================
+        function renderHistoryTab() {
+            const entries = state.historyEntries || [];
+            const totalOut = entries.reduce((sum, h) => sum + (Number(h.quantity) || 0), 0);
+
+            return `
+                <div class="flex items-center justify-between">
+                    <div>
+                        <h2 class="font-serif text-2xl font-bold text-ink">Historique des sorties</h2>
+                        <p class="text-xs text-inkmuted">${totalOut} bouteille${totalOut > 1 ? 's' : ''} dégustée${totalOut > 1 ? 's' : ''} ou sortie${totalOut > 1 ? 's' : ''}</p>
+                    </div>
+                </div>
+
+                ${entries.length === 0 ? `
+                    <div class="bg-card border border-borderline rounded-3xl p-8 text-center space-y-2">
+                        <i class="ph ph-wine text-4xl text-inkmuted/50"></i>
+                        <p class="text-sm font-semibold text-ink">Aucune sortie enregistrée</p>
+                        <p class="text-xs text-inkmuted">Lorsque vous ouvrez ou sortez une bouteille depuis Ma Cave, elle apparaît ici.</p>
+                    </div>
+                ` : `
+                    <div class="space-y-2.5">
+                        ${entries.map(h => `
+                            <div class="bg-card border border-borderline rounded-2xl p-3.5 shadow-xs space-y-1.5">
+                                <div class="flex items-start justify-between gap-2">
+                                    <div class="flex items-center gap-1.5 min-w-0 flex-wrap">
+                                        ${getColorDotHtml(h.color)}
+                                        <p class="text-sm font-bold text-ink truncate">${escapeHtml(h.wineName)}</p>
+                                        ${getFormatBadgeHtml(h.format)}
+                                    </div>
+                                    <span class="text-[11px] font-semibold px-2 py-0.5 rounded-full bg-sand text-ink shrink-0">-${h.quantity} btl</span>
+                                </div>
+                                <p class="text-xs text-inkmuted">
+                                    ${escapeHtml(h.vintage || 'NV')} • Cave : <strong>${escapeHtml(h.caveName)}</strong> • ${escapeHtml(h.date)}
+                                </p>
+                                <div class="flex flex-wrap items-center gap-1.5 pt-1">
+                                    <span class="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-bordeaux/10 text-bordeaux">${escapeHtml(h.reason)}</span>
+                                    ${h.unitPrice ? `<span class="text-[10px] text-inkmuted">${formatEuro(h.unitPrice)}/u</span>` : ''}
+                                </div>
+                                ${h.note ? `<p class="text-xs italic text-inkmuted pt-1">« ${escapeHtml(h.note)} »</p>` : ''}
+                            </div>
+                        `).join('')}
+                    </div>
+                `}
+            `;
+        }
+
+        // =========================================================================
+        // 9. MODALES : DÉTAIL VIN, MODIFICATION, SORTIE, AJOUT MANUEL
+        // =========================================================================
+        function openWineDetailModal(wineId) {
+            const wine = state.wines.find(w => w.id === wineId);
+            if (!wine) return;
+            const entries = getWineStockEntries(wine.id);
+            const mat = getMaturityInfo(wine);
+            const opening = getOpeningAdvice(wine);
+
+            openModal(`
+                <div class="space-y-4">
+                    <div class="flex items-start justify-between gap-3">
+                        <div class="flex items-center gap-2 flex-wrap">
+                            ${getColorDotHtml(wine.color)}
+                            <span class="text-xs font-semibold uppercase tracking-wider text-inkmuted">${escapeHtml(wine.color)}</span>
+                            ${getFormatBadgeHtml(wine.format)}
+                        </div>
+                        <button onclick="closeModal()" class="w-8 h-8 rounded-full bg-sand flex items-center justify-center text-ink">✕</button>
+                    </div>
+
+                    <div class="flex gap-3.5">
+                        ${wine.photo ? `
+                            <img onclick="openPhotoZoom('${wine.photo}')" src="${wine.photo}" alt="${escapeHtml(wine.name)}" class="w-24 h-32 rounded-2xl object-cover border border-borderline shrink-0 cursor-zoom-in">
+                        ` : `
+                            <div class="w-24 h-32 rounded-2xl bg-sand border border-borderline flex flex-col items-center justify-center shrink-0 text-bordeaux">
+                                <i class="ph-fill ph-wine text-3xl"></i>
+                                <span class="text-xs font-bold mt-1">${escapeHtml(wine.vintage || 'NV')}</span>
+                            </div>
+                        `}
+                        <div class="min-w-0 flex-1">
+                            <h3 class="font-serif text-2xl font-bold text-ink leading-tight">${escapeHtml(wine.name)}</h3>
+                            <p class="text-xs font-semibold text-bordeaux mt-1">${escapeHtml(wine.vintage || 'NV')} • ${escapeHtml(wine.appellation || '')}</p>
+                            ${wine.domain ? `<p class="text-xs text-inkmuted mt-0.5">${escapeHtml(wine.domain)}</p>` : ''}
+                            <p class="text-[11px] text-inkmuted mt-0.5">Format : <strong class="text-ink">${wine.format === 'Magnum' ? 'Magnum (1,5 L)' : 'Bouteille (75 cl)'}</strong></p>
+                            <span class="inline-block mt-2 text-[11px] font-semibold px-2.5 py-0.5 rounded-full border ${mat.badgeClass}">${mat.label}</span>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-3 gap-2 text-center">
+                        <div class="bg-sand/80 rounded-2xl p-2.5">
+                            <p class="text-[10px] text-inkmuted">Prix estimé</p>
+                            <p class="text-sm font-bold text-ink mt-0.5">${formatEuro(wine.estimatedPrice)}</p>
+                        </div>
+                        <div class="bg-sand/80 rounded-2xl p-2.5">
+                            <p class="text-[10px] text-inkmuted">Parker</p>
+                            <p class="text-sm font-bold text-amber-900 mt-0.5">${escapeHtml(wine.parkerScore || '—')}</p>
+                        </div>
+                        <div class="bg-sand/80 rounded-2xl p-2.5">
+                            <p class="text-[10px] text-inkmuted">Vivino</p>
+                            <p class="text-sm font-bold text-rose-900 mt-0.5">${escapeHtml(wine.vivinoScore || '—')}</p>
+                        </div>
+                    </div>
+
+                    <!-- CONSEIL D'OUVERTURE / CARAFAGE -->
+                    <div class="bg-amber-50/70 border border-amber-200/80 rounded-2xl p-3 flex items-start gap-2.5">
+                        <i class="ph-fill ph-clock text-bordeaux text-base shrink-0 mt-0.5"></i>
+                        <div class="text-xs">
+                            <p class="font-bold text-ink">Ouverture : ${escapeHtml(opening.shortLabel)}</p>
+                            <p class="text-inkmuted mt-0.5">${escapeHtml(opening.detail)}</p>
+                        </div>
+                    </div>
+
+                    <!-- STOCK PAR CAVE -->
+                    <div class="bg-card border border-borderline rounded-2xl p-3.5 space-y-2">
+                        <p class="text-xs font-bold text-ink">Emplacement en cave</p>
+                        ${entries.length === 0 ? `<p class="text-xs text-inkmuted">Stock épuisé.</p>` : entries.map(st => `
+                            <div class="flex items-center justify-between text-xs py-1 border-b last:border-b-0 border-borderline/60">
+                                <span class="font-medium text-ink">${escapeHtml(getCaveName(st.caveId))}</span>
+                                <span class="font-bold text-bordeaux">${st.quantity} ${wine.format === 'Magnum' ? (st.quantity > 1 ? 'magnums' : 'magnum') : (st.quantity > 1 ? 'bouteilles' : 'bouteille')}</span>
+                            </div>
+                        `).join('')}
+                    </div>
+
+                    ${wine.notes ? `
+                        <div class="bg-sand/60 rounded-2xl p-3 text-xs text-ink">
+                            <p class="font-semibold mb-1">Notes de dégustation</p>
+                            <p class="text-inkmuted leading-relaxed">${escapeHtml(wine.notes)}</p>
+                        </div>
+                    ` : ''}
+
+                    <div class="grid grid-cols-2 gap-2.5 pt-1">
+                        <button onclick="openEditWineModal('${wine.id}')" class="py-3 rounded-2xl bg-sand border border-borderline text-xs font-bold text-ink">
+                            Modifier la fiche
+                        </button>
+                        <button onclick="openConsumeWineModal('${wine.id}')" class="py-3 rounded-2xl bg-bordeaux text-white text-xs font-bold">
+                            Sortir / Boire
+                        </button>
+                    </div>
+                </div>
+            `);
+        }
+
+        function openEditWineModal(wineId) {
+            const wine = state.wines.find(w => w.id === wineId);
+            if (!wine) return;
+
+            const caveStocks = state.caves.map(c => {
+                const st = state.stockEntries.find(s => s.wineId === wine.id && s.caveId === c.id);
+                return { cave: c, qty: st ? Number(st.quantity) : 0 };
+            });
+
+            openModal(`
+                <form onsubmit="event.preventDefault(); saveEditedWine('${wine.id}');" class="space-y-3.5">
+                    <div class="flex items-center justify-between">
+                        <h3 class="font-serif text-xl font-bold text-ink">Modifier le vin</h3>
+                        <button type="button" onclick="closeModal()" class="w-8 h-8 rounded-full bg-sand flex items-center justify-center">✕</button>
+                    </div>
+
+                    <div>
+                        <label class="text-[11px] font-semibold text-inkmuted">Nom du vin / Château</label>
+                        <input id="edit-name" type="text" required value="${escapeHtml(wine.name)}" class="w-full mt-1 bg-card border border-borderline rounded-xl px-3 py-2 text-sm">
+                    </div>
+
+                    <div class="grid grid-cols-3 gap-2">
+                        <div>
+                            <label class="text-[11px] font-semibold text-inkmuted">Millésime</label>
+                            <input id="edit-vintage" type="number" value="${escapeHtml(wine.vintage || '')}" class="w-full mt-1 bg-card border border-borderline rounded-xl px-3 py-2 text-sm">
+                        </div>
+                        <div>
+                            <label class="text-[11px] font-semibold text-inkmuted">Couleur</label>
+                            <select id="edit-color" class="w-full mt-1 bg-card border border-borderline rounded-xl px-2.5 py-2 text-sm">
+                                ${['Rouge', 'Blanc', 'Rosé', 'Champagne'].map(c => `<option value="${c}" ${wine.color === c ? 'selected' : ''}>${c}</option>`).join('')}
+                            </select>
+                        </div>
+                        <div>
+                            <label class="text-[11px] font-semibold text-inkmuted">Format</label>
+                            <select id="edit-format" class="w-full mt-1 bg-card border border-borderline rounded-xl px-2.5 py-2 text-sm">
+                                <option value="Bouteille" ${(wine.format || 'Bouteille') === 'Bouteille' ? 'selected' : ''}>Bouteille</option>
+                                <option value="Magnum" ${wine.format === 'Magnum' ? 'selected' : ''}>Magnum</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="text-[11px] font-semibold text-inkmuted">Appellation</label>
+                        <input id="edit-appellation" type="text" value="${escapeHtml(wine.appellation || '')}" class="w-full mt-1 bg-card border border-borderline rounded-xl px-3 py-2 text-sm">
+                    </div>
+
+                    <div class="grid grid-cols-3 gap-2">
+                        <div>
+                            <label class="text-[11px] font-semibold text-inkmuted">Prix (€)</label>
+                            <input id="edit-price" type="number" value="${Number(wine.estimatedPrice) || 0}" class="w-full mt-1 bg-card border border-borderline rounded-xl px-3 py-2 text-sm">
+                        </div>
+                        <div>
+                            <label class="text-[11px] font-semibold text-inkmuted">Parker</label>
+                            <input id="edit-parker" type="text" value="${escapeHtml(wine.parkerScore || '')}" class="w-full mt-1 bg-card border border-borderline rounded-xl px-3 py-2 text-sm">
+                        </div>
+                        <div>
+                            <label class="text-[11px] font-semibold text-inkmuted">Vivino</label>
+                            <input id="edit-vivino" type="text" value="${escapeHtml(wine.vivinoScore || '')}" class="w-full mt-1 bg-card border border-borderline rounded-xl px-3 py-2 text-sm">
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-2.5">
+                        <div>
+                            <label class="text-[11px] font-semibold text-inkmuted">Apogée début</label>
+                            <input id="edit-from" type="number" value="${Number(wine.drinkFrom) || CURRENT_YEAR}" class="w-full mt-1 bg-card border border-borderline rounded-xl px-3 py-2 text-sm">
+                        </div>
+                        <div>
+                            <label class="text-[11px] font-semibold text-inkmuted">Apogée fin</label>
+                            <input id="edit-to" type="number" value="${Number(wine.drinkTo) || (CURRENT_YEAR + 5)}" class="w-full mt-1 bg-card border border-borderline rounded-xl px-3 py-2 text-sm">
+                        </div>
+                    </div>
+
+                    <div class="bg-sand/70 rounded-2xl p-3 space-y-2">
+                        <p class="text-xs font-bold text-ink">Quantités par cave</p>
+                        ${caveStocks.map(({ cave, qty }) => `
+                            <div class="flex items-center justify-between gap-2">
+                                <span class="text-xs font-medium text-ink">${escapeHtml(cave.name)}</span>
+                                <input id="edit-qty-${cave.id}" type="number" min="0" value="${qty}" class="w-20 bg-card border border-borderline rounded-xl px-2.5 py-1.5 text-sm text-center font-bold">
+                            </div>
+                        `).join('')}
+                    </div>
+
+                    <div>
+                        <label class="text-[11px] font-semibold text-inkmuted">Notes personnelles</label>
+                        <textarea id="edit-notes" rows="2" class="w-full mt-1 bg-card border border-borderline rounded-xl px-3 py-2 text-sm">${escapeHtml(wine.notes || '')}</textarea>
+                    </div>
+
+                    <button type="submit" class="w-full py-3 rounded-2xl bg-bordeaux text-white text-sm font-bold">Enregistrer les modifications</button>
+                </form>
+            `);
+        }
+
+        function saveEditedWine(wineId) {
+            const wine = state.wines.find(w => w.id === wineId);
+            if (!wine) return;
+
+            wine.name = document.getElementById('edit-name').value.trim() || wine.name;
+            wine.vintage = Number(document.getElementById('edit-vintage').value) || wine.vintage;
+            wine.color = document.getElementById('edit-color').value;
+            wine.format = document.getElementById('edit-format').value === 'Magnum' ? 'Magnum' : 'Bouteille';
+            wine.appellation = document.getElementById('edit-appellation').value.trim();
+            wine.estimatedPrice = Number(document.getElementById('edit-price').value) || 0;
+            wine.parkerScore = document.getElementById('edit-parker').value.trim();
+            wine.vivinoScore = document.getElementById('edit-vivino').value.trim();
+            wine.drinkFrom = Number(document.getElementById('edit-from').value) || CURRENT_YEAR;
+            wine.drinkTo = Number(document.getElementById('edit-to').value) || (wine.drinkFrom + 5);
+            wine.notes = document.getElementById('edit-notes').value.trim();
+
+            state.caves.forEach(c => {
+                const inp = document.getElementById(`edit-qty-${c.id}`);
+                const newQty = Math.max(0, Number(inp ? inp.value : 0) || 0);
+                const idx = state.stockEntries.findIndex(s => s.wineId === wine.id && s.caveId === c.id);
+                if (newQty > 0) {
+                    if (idx >= 0) {
+                        state.stockEntries[idx].quantity = newQty;
+                    } else {
+                        state.stockEntries.push({ id: 'st_' + Date.now() + '_' + c.id, wineId: wine.id, caveId: c.id, quantity: newQty });
+                    }
+                } else if (idx >= 0) {
+                    state.stockEntries.splice(idx, 1);
+                }
+            });
+
+            saveState();
+            closeModal();
+            renderApp();
+            showToast('Fiche mise à jour.');
+        }
+
+        function quickIncrementStock(wineId) {
+            const entries = getWineStockEntries(wineId);
+            if (entries.length > 0) {
+                entries[0].quantity = (Number(entries[0].quantity) || 0) + 1;
+            } else {
+                const defaultCaveId = state.caves[0]?.id || 'cave_sc';
+                state.stockEntries.push({ id: 'st_' + Date.now(), wineId, caveId: defaultCaveId, quantity: 1 });
+            }
+            saveState();
+            renderApp();
+            showToast('+1 bouteille ajoutée en cave.');
+        }
+
+        function openConsumeWineModal(wineId) {
+            const wine = state.wines.find(w => w.id === wineId);
+            if (!wine) return;
+            const entries = getWineStockEntries(wine.id);
+            if (entries.length === 0) {
+                showToast('Plus aucune bouteille en stock.');
+                return;
+            }
+
+            openModal(`
+                <form onsubmit="event.preventDefault(); confirmConsumeWine('${wine.id}');" class="space-y-3.5">
+                    <div class="flex items-center justify-between">
+                        <h3 class="font-serif text-xl font-bold text-ink">Sortir de la cave</h3>
+                        <button type="button" onclick="closeModal()" class="w-8 h-8 rounded-full bg-sand flex items-center justify-center">✕</button>
+                    </div>
+                    <p class="text-xs text-inkmuted"><strong class="text-ink">${escapeHtml(wine.name)}</strong> (${escapeHtml(wine.vintage || 'NV')} • ${wine.format === 'Magnum' ? 'Magnum' : 'Bouteille'})</p>
+
+                    <div>
+                        <label class="text-[11px] font-semibold text-inkmuted">Depuis quelle cave ?</label>
+                        <select id="consume-cave" class="w-full mt-1 bg-card border border-borderline rounded-xl px-3 py-2.5 text-sm">
+                            ${entries.map(e => `<option value="${e.caveId}">${escapeHtml(getCaveName(e.caveId))} (${e.quantity} dispo)</option>`).join('')}
+                        </select>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-2.5">
+                        <div>
+                            <label class="text-[11px] font-semibold text-inkmuted">Quantité</label>
+                            <input id="consume-qty" type="number" min="1" value="1" class="w-full mt-1 bg-card border border-borderline rounded-xl px-3 py-2 text-sm font-bold">
+                        </div>
+                        <div>
+                            <label class="text-[11px] font-semibold text-inkmuted">Motif</label>
+                            <select id="consume-reason" class="w-full mt-1 bg-card border border-borderline rounded-xl px-3 py-2 text-sm">
+                                <option value="Bu / Dégusté">Bu / Dégusté</option>
+                                <option value="Offert / Cadeau">Offert / Cadeau</option>
+                                <option value="Cuisiné">Cuisiné</option>
+                                <option value="Erreur de saisie">Erreur de saisie</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="text-[11px] font-semibold text-inkmuted">Note de dégustation / Occasion (optionnel)</label>
+                        <input id="consume-note" type="text" placeholder="Ex: Dîner anniversaire, parfait sur l'agneau..." class="w-full mt-1 bg-card border border-borderline rounded-xl px-3 py-2 text-sm">
+                    </div>
+
+                    <button type="submit" class="w-full py-3 rounded-2xl bg-bordeaux text-white text-sm font-bold">Valider la sortie</button>
+                </form>
+            `);
+        }
+
+        function confirmConsumeWine(wineId) {
+            const wine = state.wines.find(w => w.id === wineId);
+            if (!wine) return;
+            const caveId = document.getElementById('consume-cave').value;
+            const reason = document.getElementById('consume-reason').value;
+            const note = document.getElementById('consume-note').value.trim();
+            const stockEntry = state.stockEntries.find(s => s.wineId === wineId && s.caveId === caveId);
+            if (!stockEntry || stockEntry.quantity <= 0) return;
+
+            const qty = Math.min(stockEntry.quantity, Math.max(1, Number(document.getElementById('consume-qty').value) || 1));
+            stockEntry.quantity -= qty;
+            if (stockEntry.quantity <= 0) {
+                state.stockEntries = state.stockEntries.filter(s => s.id !== stockEntry.id);
+            }
+
+            if (reason !== 'Erreur de saisie') {
+                state.historyEntries.unshift({
+                    id: 'hist_' + Date.now(),
+                    date: new Date().toISOString().slice(0, 10),
+                    reason,
+                    wineName: wine.name,
+                    vintage: wine.vintage,
+                    color: wine.color,
+                    format: wine.format || 'Bouteille',
+                    caveName: getCaveName(caveId),
+                    quantity: qty,
+                    unitPrice: wine.estimatedPrice || 0,
+                    parkerScore: wine.parkerScore || '',
+                    vivinoScore: wine.vivinoScore || '',
+                    note
+                });
+            }
+
+            saveState();
+            closeModal();
+            renderApp();
+            showToast(`${qty} bouteille${qty > 1 ? 's' : ''} sortie${qty > 1 ? 's' : ''} de ${getCaveName(caveId)}.`);
+        }
+
+        function openAddManualWineModal() {
+            openModal(`
+                <form onsubmit="event.preventDefault(); confirmManualWineAdd();" class="space-y-3.5">
+                    <div class="flex items-center justify-between">
+                        <h3 class="font-serif text-xl font-bold text-ink">Ajouter une bouteille</h3>
+                        <button type="button" onclick="closeModal()" class="w-8 h-8 rounded-full bg-sand flex items-center justify-center">✕</button>
+                    </div>
+
+                    <div>
+                        <label class="text-[11px] font-semibold text-inkmuted">Nom du vin / Château *</label>
+                        <input id="add-name" type="text" required placeholder="Ex: Château Palmer" class="w-full mt-1 bg-card border border-borderline rounded-xl px-3 py-2 text-sm">
+                    </div>
+
+                    <div class="grid grid-cols-3 gap-2">
+                        <div>
+                            <label class="text-[11px] font-semibold text-inkmuted">Millésime</label>
+                            <input id="add-vintage" type="number" value="2018" class="w-full mt-1 bg-card border border-borderline rounded-xl px-3 py-2 text-sm">
+                        </div>
+                        <div>
+                            <label class="text-[11px] font-semibold text-inkmuted">Couleur</label>
+                            <select id="add-color" class="w-full mt-1 bg-card border border-borderline rounded-xl px-2.5 py-2 text-sm">
+                                <option value="Rouge">Rouge</option>
+                                <option value="Blanc">Blanc</option>
+                                <option value="Rosé">Rosé</option>
+                                <option value="Champagne">Champagne</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="text-[11px] font-semibold text-inkmuted">Format</label>
+                            <select id="add-format" class="w-full mt-1 bg-card border border-borderline rounded-xl px-2.5 py-2 text-sm">
+                                <option value="Bouteille" selected>Bouteille</option>
+                                <option value="Magnum">Magnum</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="text-[11px] font-semibold text-inkmuted">Appellation</label>
+                        <input id="add-appellation" type="text" placeholder="Ex: Margaux" class="w-full mt-1 bg-card border border-borderline rounded-xl px-3 py-2 text-sm">
+                    </div>
+
+                    <div class="grid grid-cols-3 gap-2">
+                        <div>
+                            <label class="text-[11px] font-semibold text-inkmuted">Cave</label>
+                            <select id="add-cave" class="w-full mt-1 bg-card border border-borderline rounded-xl px-2.5 py-2 text-sm">
+                                ${state.caves.map(c => `<option value="${c.id}">${escapeHtml(c.name)}</option>`).join('')}
+                            </select>
+                        </div>
+                        <div>
+                            <label class="text-[11px] font-semibold text-inkmuted">Quantité</label>
+                            <input id="add-qty" type="number" min="1" value="1" class="w-full mt-1 bg-card border border-borderline rounded-xl px-3 py-2 text-sm font-bold">
+                        </div>
+                        <div>
+                            <label class="text-[11px] font-semibold text-inkmuted">Prix (€)</label>
+                            <input id="add-price" type="number" min="0" value="45" class="w-full mt-1 bg-card border border-borderline rounded-xl px-3 py-2 text-sm">
+                        </div>
+                    </div>
+
+                    <button type="submit" class="w-full py-3 rounded-2xl bg-bordeaux text-white text-sm font-bold">Ajouter à ma cave</button>
+                </form>
+            `);
+        }
+
+        function confirmManualWineAdd() {
+            const name = document.getElementById('add-name').value.trim();
+            if (!name) return;
+            const vintage = Number(document.getElementById('add-vintage').value) || CURRENT_YEAR;
+            const color = document.getElementById('add-color').value;
+            const format = document.getElementById('add-format').value === 'Magnum' ? 'Magnum' : 'Bouteille';
+            const appellation = document.getElementById('add-appellation').value.trim();
+            const caveId = document.getElementById('add-cave').value;
+            const quantity = Math.max(1, Number(document.getElementById('add-qty').value) || 1);
+            const estimatedPrice = Math.max(0, Number(document.getElementById('add-price').value) || 0);
+
+            findOrCreateWineAndAddStock({
+                name,
+                domain: '',
+                vintage,
+                color,
+                format,
+                appellation,
+                estimatedPrice,
+                parkerScore: '',
+                vivinoScore: '',
+                drinkFrom: vintage + 3,
+                drinkTo: vintage + 15,
+                notes: '',
+                photo: ''
+            }, caveId, quantity);
+
+            saveState();
+            closeModal();
+            switchTab('cellar');
+            showToast(`${quantity} × ${name} (${format}) ajouté.`);
+        }
+
+        function findOrCreateWineAndAddStock(wineData, caveId, quantity, replaceMode = false) {
+            const normName = (wineData.name || '').trim().toLowerCase();
+            const normVintage = Number(wineData.vintage) || 0;
+            const normFormat = wineData.format === 'Magnum' ? 'Magnum' : 'Bouteille';
+
+            let existing = state.wines.find(w =>
+                (w.name || '').trim().toLowerCase() === normName &&
+                (Number(w.vintage) || 0) === normVintage &&
+                (w.format || 'Bouteille') === normFormat
+            );
+
+            if (!existing) {
+                existing = {
+                    id: 'wine_' + Date.now() + '_' + Math.random().toString(36).slice(2, 6),
+                    name: wineData.name || 'Vin inconnu',
+                    domain: wineData.domain || '',
+                    vintage: normVintage || CURRENT_YEAR,
+                    color: ['Rouge', 'Blanc', 'Rosé', 'Champagne'].includes(wineData.color) ? wineData.color : 'Rouge',
+                    format: normFormat,
+                    appellation: wineData.appellation || '',
+                    estimatedPrice: Number(wineData.estimatedPrice) || 0,
+                    parkerScore: wineData.parkerScore || '',
+                    vivinoScore: wineData.vivinoScore || '',
+                    drinkFrom: Number(wineData.drinkFrom) || CURRENT_YEAR,
+                    drinkTo: Number(wineData.drinkTo) || (CURRENT_YEAR + 8),
+                    notes: wineData.notes || '',
+                    photo: wineData.photo || ''
+                };
+                state.wines.unshift(existing);
+            } else {
+                if (wineData.photo && !existing.photo) existing.photo = wineData.photo;
+                if (wineData.parkerScore && !existing.parkerScore) existing.parkerScore = wineData.parkerScore;
+                if (wineData.vivinoScore && !existing.vivinoScore) existing.vivinoScore = wineData.vivinoScore;
+                if (wineData.estimatedPrice && !existing.estimatedPrice) existing.estimatedPrice = Number(wineData.estimatedPrice);
+            }
+
+            const st = state.stockEntries.find(s => s.wineId === existing.id && s.caveId === caveId);
+            if (st) {
+                st.quantity = replaceMode ? quantity : (Number(st.quantity) || 0) + quantity;
+            } else {
+                state.stockEntries.push({
+                    id: 'st_' + Date.now() + '_' + Math.random().toString(36).slice(2, 6),
+                    wineId: existing.id,
+                    caveId,
+                    quantity
+                });
+            }
+        }
+
+        // =========================================================================
+        // 10. SCAN PHOTO IA (UNIVERSEL : 1 OU PLUSIEURS BOUTEILLES) & VALIDATION
+        // =========================================================================
+        function openScanChoiceModal() {
+            if (!(state.apiKey || '').trim()) {
+                openSettingsModal();
+                showToast('Ajoutez d’abord votre clé API Gemini.');
+                return;
+            }
+            openModal(`
+                <div class="space-y-4">
+                    <div class="flex items-center justify-between">
+                        <h3 class="font-serif text-2xl font-bold text-ink">Scanner une ou plusieurs bouteilles</h3>
+                        <button onclick="closeModal()" class="w-8 h-8 rounded-full bg-sand flex items-center justify-center">✕</button>
+                    </div>
+                    <p class="text-xs text-inkmuted leading-relaxed">
+                        Prenez en photo une bouteille isolée, un carton ouvert ou plusieurs bouteilles côte à côte : l'IA détecte automatiquement chaque cuvée, son format (Bouteille ou Magnum), sa cote, ses notes Parker/Vivino et son apogée.
+                    </p>
+                    <div class="grid grid-cols-1 gap-3">
+                        <button onclick="document.getElementById('camera-input').click()" class="w-full py-3.5 px-4 rounded-2xl bg-bordeaux text-white font-bold text-sm flex items-center justify-center gap-2.5 shadow-md active:scale-98">
+                            <i class="ph-bold ph-camera text-xl text-gold"></i>
+                            <span>Prendre une photo maintenant</span>
+                        </button>
+                        <button onclick="document.getElementById('gallery-input').click()" class="w-full py-3.5 px-4 rounded-2xl bg-sand border border-borderline text-ink font-bold text-sm flex items-center justify-center gap-2.5 active:scale-98">
+                            <i class="ph-bold ph-image text-xl text-bordeaux"></i>
+                            <span>Choisir dans la photothèque</span>
+                        </button>
+                    </div>
+                </div>
+            `);
+        }
+
+        function compressImageToDataUrl(file, maxDim = 1024, quality = 0.8) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    const img = new Image();
+                    img.onload = () => {
+                        let { width, height } = img;
+                        if (width > maxDim || height > maxDim) {
+                            if (width > height) {
+                                height = Math.round((height * maxDim) / width);
+                                width = maxDim;
+                            } else {
+                                width = Math.round((width * maxDim) / height);
+                                height = maxDim;
+                            }
+                        }
+                        const canvas = document.createElement('canvas');
+                        canvas.width = width;
+                        canvas.height = height;
+                        const ctx = canvas.getContext('2d');
+                        ctx.drawImage(img, 0, 0, width, height);
+                        resolve(canvas.toDataURL('image/jpeg', quality));
+                    };
+                    img.onerror = reject;
+                    img.src = e.target.result;
+                };
+                reader.onerror = reject;
+                reader.readAsDataURL(file);
+            });
+        }
+
+        async function handleImageUpload(event) {
+            const file = event.target.files && event.target.files[0];
+            event.target.value = '';
+            if (!file) return;
+
+            openModal(`
+                <div class="py-8 text-center space-y-3">
+                    <div class="w-12 h-12 rounded-full border-4 border-bordeaux border-t-transparent animate-spin mx-auto"></div>
+                    <p class="font-serif text-xl font-bold text-ink">Analyse de l'étiquette par Gemini...</p>
+                    <p class="text-xs text-inkmuted">Identification des cuvées, notes critiques et apogée</p>
+                </div>
+            `);
+
+            try {
+                const aiDataUrl = await compressImageToDataUrl(file, 1100, 0.82);
+                const thumbDataUrl = await compressImageToDataUrl(file, 420, 0.72);
+                const base64Data = aiDataUrl.split(',')[1];
+
+                const prompt = `Analyse cette photo de bouteille(s) de vin.
+Identifie TOUTES les bouteilles de vin distinctes visibles sur l'image (1 seule ou plusieurs).
+Pour chaque bouteille, retourne un objet JSON avec les champs exacts suivants :
+- "name": nom complet du château ou de la cuvée (en français)
+- "domain": nom du domaine ou producteur
+- "vintage": année du millésime en entier (ex: 2018), ou ${CURRENT_YEAR} si non millésimé
+- "color": exactement une valeur parmi "Rouge", "Blanc", "Rosé", "Champagne"
+- "format": "Magnum" uniquement s'il s'agit clairement d'un magnum (1,5 L / grand flacon), sinon "Bouteille"
+- "appellation": appellation précise (ex: "Pauillac", "Meursault 1er Cru", "Champagne")
+- "quantity": nombre de bouteilles identiques de cette cuvée visibles sur la photo (entier >= 1)
+- "estimatedPrice": estimation réaliste du prix moyen en euros (€) pour une bouteille en France (nombre entier)
+- "parkerScore": note Robert Parker / Wine Advocate si connue ou estimation réaliste (ex: "94/100" ou "")
+- "vivinoScore": note moyenne Vivino réaliste (ex: "4.3/5" ou "")
+- "drinkFrom": année de début d'apogée (entier)
+- "drinkTo": année de fin d'apogée (entier)
+- "notes": brève description du style du vin et conseil de service (1 phrase)
+
+Réponds UNIQUEMENT avec un objet JSON valide de la forme :
+{ "bottles": [ ... ] }`;
+
+                const rawResponse = await callGeminiApi(prompt, base64Data, 'image/jpeg');
+                const parsed = extractJsonFromText(rawResponse);
+                const bottles = Array.isArray(parsed.bottles) ? parsed.bottles : (Array.isArray(parsed) ? parsed : []);
+
+                if (!bottles.length) {
+                    throw new Error('Aucune étiquette de vin lisible détectée sur cette photo.');
+                }
+
+                state.pendingScanBatch = {
+                    photoThumb: bottles.length === 1 ? thumbDataUrl : '',
+                    items: bottles.map(b => ({
+                        selected: true,
+                        name: b.name || 'Vin détecté',
+                        domain: b.domain || '',
+                        vintage: Number(b.vintage) || CURRENT_YEAR,
+                        color: ['Rouge', 'Blanc', 'Rosé', 'Champagne'].includes(b.color) ? b.color : 'Rouge',
+                        format: b.format === 'Magnum' ? 'Magnum' : 'Bouteille',
+                        appellation: b.appellation || '',
+                        quantity: Math.max(1, Number(b.quantity) || 1),
+                        estimatedPrice: Math.max(0, Number(b.estimatedPrice) || 35),
+                        parkerScore: b.parkerScore || '',
+                        vivinoScore: b.vivinoScore || '',
+                        drinkFrom: Number(b.drinkFrom) || CURRENT_YEAR,
+                        drinkTo: Number(b.drinkTo) || (CURRENT_YEAR + 8),
+                        notes: b.notes || ''
+                    }))
+                };
+
+                renderScanValidationModal();
+            } catch (err) {
+                openModal(`
+                    <div class="space-y-4 text-center py-3">
+                        <div class="w-12 h-12 rounded-full bg-red-100 text-red-700 flex items-center justify-center mx-auto text-2xl">!</div>
+                        <h3 class="font-serif text-xl font-bold text-ink">Analyse impossible</h3>
+                        <p class="text-xs text-inkmuted leading-relaxed">${escapeHtml(err.message || 'Erreur inconnue')}</p>
+                        <div class="grid grid-cols-2 gap-2 pt-2">
+                            <button onclick="openSettingsModal()" class="py-2.5 rounded-xl bg-sand text-xs font-bold text-ink">Vérifier clé API</button>
+                            <button onclick="closeModal()" class="py-2.5 rounded-xl bg-bordeaux text-white text-xs font-bold">Fermer</button>
+                        </div>
+                    </div>
+                `);
+            }
+        }
+
+        function renderScanValidationModal() {
+            const batch = state.pendingScanBatch;
+            if (!batch) return;
+
+            openModal(`
+                <div class="space-y-4">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <h3 class="font-serif text-xl font-bold text-ink">Validation du scan (${batch.items.length})</h3>
+                            <p class="text-[11px] text-inkmuted">Vérifiez les infos et choisissez la cave de destination</p>
+                        </div>
+                        <button onclick="closeModal()" class="w-8 h-8 rounded-full bg-sand flex items-center justify-center">✕</button>
+                    </div>
+
+                    <div>
+                        <label class="text-[11px] font-semibold text-inkmuted">Ranger dans quelle cave ?</label>
+                        <select id="scan-target-cave" class="w-full mt-1 bg-card border border-borderline rounded-xl px-3 py-2.5 text-sm font-semibold">
+                            ${state.caves.map(c => `<option value="${c.id}">${escapeHtml(c.name)}</option>`).join('')}
+                        </select>
+                    </div>
+
+                    <div class="space-y-3">
+                        ${batch.items.map((item, idx) => `
+                            <div class="bg-card border border-borderline rounded-2xl p-3 space-y-2.5">
+                                <div class="flex items-center justify-between gap-2">
+                                    <label class="flex items-center gap-2 text-xs font-bold text-bordeaux cursor-pointer">
+                                        <input type="checkbox" id="scan-check-${idx}" ${item.selected ? 'checked' : ''} class="w-4 h-4 accent-bordeaux">
+                                        <span>Bouteille #${idx + 1}</span>
+                                    </label>
+                                    <span class="text-[11px] text-inkmuted">${escapeHtml(item.appellation)}</span>
+                                </div>
+
+                                <div>
+                                    <label class="text-[10px] font-semibold text-inkmuted">Nom du vin</label>
+                                    <input id="scan-name-${idx}" type="text" value="${escapeHtml(item.name)}" class="w-full mt-0.5 bg-sand/50 border border-borderline rounded-xl px-2.5 py-1.5 text-xs font-bold">
+                                </div>
+
+                                <div class="grid grid-cols-2 gap-2">
+                                    <div>
+                                        <label class="text-[10px] font-semibold text-inkmuted">Millésime</label>
+                                        <input id="scan-vintage-${idx}" type="number" value="${escapeHtml(item.vintage)}" class="w-full mt-0.5 bg-sand/50 border border-borderline rounded-xl px-2.5 py-1.5 text-xs">
+                                    </div>
+                                    <div>
+                                        <label class="text-[10px] font-semibold text-inkmuted">Couleur</label>
+                                        <select id="scan-color-${idx}" class="w-full mt-0.5 bg-sand/50 border border-borderline rounded-xl px-2 py-1.5 text-xs">
+                                            ${['Rouge', 'Blanc', 'Rosé', 'Champagne'].map(c => `<option value="${c}" ${item.color === c ? 'selected' : ''}>${c}</option>`).join('')}
+                                        </select>
+                                    </div>
+                                </div>
+
+                                <div class="grid grid-cols-3 gap-2">
+                                    <div>
+                                        <label class="text-[10px] font-semibold text-inkmuted">Format</label>
+                                        <select id="scan-format-${idx}" class="w-full mt-0.5 bg-sand/50 border border-borderline rounded-xl px-2 py-1.5 text-xs font-semibold">
+                                            <option value="Bouteille" ${(item.format || 'Bouteille') === 'Bouteille' ? 'selected' : ''}>Bouteille</option>
+                                            <option value="Magnum" ${item.format === 'Magnum' ? 'selected' : ''}>Magnum</option>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label class="text-[10px] font-semibold text-inkmuted">Quantité</label>
+                                        <input id="scan-qty-${idx}" type="number" min="1" value="${item.quantity}" class="w-full mt-0.5 bg-sand/50 border border-borderline rounded-xl px-2.5 py-1.5 text-xs font-bold">
+                                    </div>
+                                    <div>
+                                        <label class="text-[10px] font-semibold text-inkmuted">Prix unitaire (€)</label>
+                                        <input id="scan-price-${idx}" type="number" min="0" value="${item.estimatedPrice}" class="w-full mt-0.5 bg-sand/50 border border-borderline rounded-xl px-2.5 py-1.5 text-xs font-semibold">
+                                    </div>
+                                </div>
+
+                                <div class="grid grid-cols-3 gap-2">
+                                    <div>
+                                        <label class="text-[10px] font-semibold text-inkmuted">Parker</label>
+                                        <input id="scan-parker-${idx}" type="text" placeholder="Ex: 94/100" value="${escapeHtml(item.parkerScore || '')}" class="w-full mt-0.5 bg-sand/50 border border-borderline rounded-xl px-2 py-1.5 text-xs">
+                                    </div>
+                                    <div>
+                                        <label class="text-[10px] font-semibold text-inkmuted">Vivino</label>
+                                        <input id="scan-vivino-${idx}" type="text" placeholder="Ex: 4.3/5" value="${escapeHtml(item.vivinoScore || '')}" class="w-full mt-0.5 bg-sand/50 border border-borderline rounded-xl px-2 py-1.5 text-xs">
+                                    </div>
+                                    <div>
+                                        <label class="text-[10px] font-semibold text-inkmuted">Apogée</label>
+                                        <div class="flex items-center gap-1 mt-0.5">
+                                            <input id="scan-from-${idx}" type="number" value="${item.drinkFrom}" class="w-full min-w-0 bg-sand/50 border border-borderline rounded-lg px-1 py-1.5 text-[11px] text-center">
+                                            <span class="text-[10px] text-inkmuted">–</span>
+                                            <input id="scan-to-${idx}" type="number" value="${item.drinkTo}" class="w-full min-w-0 bg-sand/50 border border-borderline rounded-lg px-1 py-1.5 text-[11px] text-center">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+
+                    <button onclick="confirmScanBatch()" class="w-full py-3.5 rounded-2xl bg-bordeaux text-white font-bold text-sm shadow-md">
+                        Ajouter à ma cave
+                    </button>
+                </div>
+            `);
+        }
+
+        function confirmScanBatch() {
+            const batch = state.pendingScanBatch;
+            if (!batch) return;
+            const caveId = document.getElementById('scan-target-cave').value;
+            let addedCount = 0;
+
+            batch.items.forEach((item, idx) => {
+                const checked = document.getElementById(`scan-check-${idx}`)?.checked;
+                if (!checked) return;
+
+                const name = document.getElementById(`scan-name-${idx}`).value.trim() || item.name;
+                const vintage = Number(document.getElementById(`scan-vintage-${idx}`).value) || item.vintage;
+                const color = document.getElementById(`scan-color-${idx}`).value;
+                const format = document.getElementById(`scan-format-${idx}`)?.value === 'Magnum' ? 'Magnum' : 'Bouteille';
+                const quantity = Math.max(1, Number(document.getElementById(`scan-qty-${idx}`).value) || 1);
+                const estimatedPrice = Math.max(0, Number(document.getElementById(`scan-price-${idx}`).value) || 0);
+                const parkerScore = (document.getElementById(`scan-parker-${idx}`)?.value || '').trim();
+                const vivinoScore = (document.getElementById(`scan-vivino-${idx}`)?.value || '').trim();
+                const drinkFrom = Number(document.getElementById(`scan-from-${idx}`)?.value) || item.drinkFrom || CURRENT_YEAR;
+                const drinkTo = Number(document.getElementById(`scan-to-${idx}`)?.value) || item.drinkTo || (drinkFrom + 8);
+
+                findOrCreateWineAndAddStock({
+                    ...item,
+                    name,
+                    vintage,
+                    color,
+                    format,
+                    estimatedPrice,
+                    parkerScore,
+                    vivinoScore,
+                    drinkFrom,
+                    drinkTo,
+                    photo: batch.photoThumb || ''
+                }, caveId, quantity);
+
+                addedCount += quantity;
+            });
+
+            state.pendingScanBatch = null;
+            saveState();
+            closeModal();
+            switchTab('cellar', caveId);
+            showToast(`${addedCount} bouteille${addedCount > 1 ? 's' : ''} ajoutée${addedCount > 1 ? 's' : ''} à ${getCaveName(caveId)}.`);
+        }
+
+        // =========================================================================
+        // 11. PARAMÈTRES, CLÉ API GEMINI & AUTO-DÉTECTION DU MODÈLE
+        // =========================================================================
+        async function fetchAvailableGeminiModels(cleanKey) {
+            try {
+                const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${encodeURIComponent(cleanKey)}`);
+                if (!res.ok) return [];
+                const data = await res.json();
+                const models = Array.isArray(data.models) ? data.models : [];
+                return models
+                    .filter(m => Array.isArray(m.supportedGenerationMethods) && m.supportedGenerationMethods.includes('generateContent'))
+                    .map(m => (m.name || '').replace(/^models\//, ''))
+                    .filter(name => name && !name.includes('embedding') && !name.includes('aqa') && !name.includes('imagen') && !name.includes('tts'));
+            } catch (_) {
+                return [];
+            }
+        }
+
+        async function detectBestGeminiModel(cleanKey) {
+            const listedModels = await fetchAvailableGeminiModels(cleanKey);
+            const preferredOrder = [
+                'gemini-2.5-flash',
+                'gemini-flash-latest',
+                'gemini-2.0-flash',
+                'gemini-2.0-flash-lite',
+                'gemini-2.5-flash-lite',
+                'gemini-2.5-pro'
+            ];
+
+            const candidates = [];
+            preferredOrder.forEach(p => {
+                if (listedModels.includes(p)) candidates.push(p);
+            });
+            listedModels.forEach(m => {
+                if (m.includes('flash') && !candidates.includes(m)) candidates.push(m);
+            });
+            preferredOrder.forEach(p => {
+                if (!candidates.includes(p)) candidates.push(p);
+            });
+
+            let lastErr = '';
+            for (const model of candidates) {
+                try {
+                    const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${encodeURIComponent(cleanKey)}`;
+                    const res = await fetch(url, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            contents: [{ role: 'user', parts: [{ text: 'OK' }] }]
+                        })
+                    });
+                    if (res.ok) {
+                        return model;
+                    }
+                    const errJson = await res.json().catch(() => ({}));
+                    lastErr = errJson?.error?.message || `HTTP ${res.status}`;
+                    if (res.status === 400 || res.status === 403) {
+                        throw new Error(lastErr);
+                    }
+                } catch (e) {
+                    lastErr = e.message || lastErr;
+                    if (lastErr.includes('API key not valid') || lastErr.includes('API_KEY_INVALID')) {
+                        throw e;
+                    }
+                }
+            }
+            throw new Error(lastErr || 'Aucun modèle Gemini disponible avec du quota sur cette clé API.');
+        }
+
+        async function saveAndTestApiKey() {
+            const input = document.getElementById('settings-api-key');
+            const statusBox = document.getElementById('settings-api-status');
+            const key = (input.value || '').trim();
+
+            if (!key) {
+                state.apiKey = '';
+                state.cachedWorkingModel = '';
+                saveState();
+                updateApiStatusDot();
+                statusBox.innerHTML = `<span class="text-amber-700">Clé supprimée.</span>`;
+                return;
+            }
+
+            statusBox.innerHTML = `<span class="text-inkmuted">Test de connexion avec Google Gemini...</span>`;
+            try {
+                const workingModel = await detectBestGeminiModel(key);
+                state.apiKey = key;
+                state.cachedWorkingModel = workingModel;
+                saveState();
+                updateApiStatusDot();
+                statusBox.innerHTML = `<span class="text-emerald-700 font-semibold">✓ Clé valide ! Modèle actif : ${escapeHtml(workingModel)}</span>`;
+                showToast('Clé API Gemini enregistrée et vérifiée.');
+            } catch (err) {
+                state.apiKey = key;
+                saveState();
+                updateApiStatusDot();
+                statusBox.innerHTML = `<span class="text-red-700 font-semibold">Erreur : ${escapeHtml(err.message)}</span>`;
+            }
+        }
+
+        function openSettingsModal() {
+            const totalWines = state.wines.length;
+            const totalBottles = computeCellarBreakdown(null).total;
+
+            openModal(`
+                <div class="space-y-4">
+                    <div class="flex items-center justify-between">
+                        <h3 class="font-serif text-2xl font-bold text-ink">Paramètres & Sauvegarde</h3>
+                        <button onclick="closeModal()" class="w-8 h-8 rounded-full bg-sand flex items-center justify-center">✕</button>
+                    </div>
+
+                    <!-- CLÉ API GEMINI -->
+                    <div class="bg-card border border-borderline rounded-2xl p-3.5 space-y-2.5">
+                        <div class="flex items-center justify-between">
+                            <label class="text-xs font-bold text-ink">Clé API Google Gemini</label>
+                            <a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noopener" class="text-[11px] font-semibold text-bordeaux underline">Obtenir une clé →</a>
+                        </div>
+                        <input id="settings-api-key" type="password" value="${escapeHtml(state.apiKey || '')}" placeholder="AIzaSy..." class="w-full bg-sand/60 border border-borderline rounded-xl px-3 py-2.5 text-sm">
+                        <button onclick="saveAndTestApiKey()" class="w-full py-2.5 rounded-xl bg-bordeaux text-white text-xs font-bold">
+                            Tester & Enregistrer la clé
+                        </button>
+                        <div id="settings-api-status" class="text-[11px] text-inkmuted">
+                            ${state.cachedWorkingModel ? `Modèle actif : <strong>${escapeHtml(state.cachedWorkingModel)}</strong>` : 'Votre clé reste stockée uniquement sur votre téléphone.'}
+                        </div>
+                    </div>
+
+                    <!-- EXPORT / IMPORT EXCEL CSV -->
+                    <div class="bg-card border border-borderline rounded-2xl p-3.5 space-y-2.5">
+                        <p class="text-xs font-bold text-ink">Sauvegarde Excel (.csv)</p>
+                        <p class="text-[11px] text-inkmuted leading-relaxed">
+                            Votre cave (${totalBottles} bouteilles, ${totalWines} références) est enregistrée localement dans IndexedDB. Exportez régulièrement un fichier Excel pour garder une copie de secours.
+                        </p>
+                        <div class="grid grid-cols-2 gap-2">
+                            <button onclick="exportCellarToExcelCsv()" class="py-2.5 px-3 rounded-xl bg-emerald-700 text-white text-xs font-bold flex items-center justify-center gap-1.5">
+                                <i class="ph-bold ph-download-simple"></i>
+                                <span>Exporter CSV</span>
+                            </button>
+                            <button onclick="document.getElementById('csv-import-input').click()" class="py-2.5 px-3 rounded-xl bg-sand border border-borderline text-ink text-xs font-bold flex items-center justify-center gap-1.5">
+                                <i class="ph-bold ph-upload-simple"></i>
+                                <span>Importer CSV</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `);
+        }
+
+        // =========================================================================
+        // 12. APPELS API GEMINI (VISION & CHAT)
+        // =========================================================================
+        function extractJsonFromText(text) {
+            const cleaned = (text || '').replace(/```json/gi, '').replace(/```/g, '').trim();
+            try {
+                return JSON.parse(cleaned);
+            } catch (_) {
+                const start = cleaned.indexOf('{');
+                const end = cleaned.lastIndexOf('}');
+                if (start !== -1 && end !== -1 && end > start) {
+                    return JSON.parse(cleaned.slice(start, end + 1));
+                }
+                throw new Error('Réponse IA illisible.');
+            }
+        }
+
+        function sleepMs(ms) {
+            return new Promise(resolve => setTimeout(resolve, ms));
+        }
+
+        function formatGeminiApiError(status, errJson, modelUsed) {
+            const rawMsg = errJson?.error?.message || '';
+            if (status === 429 || rawMsg.toLowerCase().includes('quota') || rawMsg.includes('RESOURCE_EXHAUSTED')) {
+                if (rawMsg.includes('limit: 0')) {
+                    return `Votre projet Google AI Studio a un quota gratuit à 0 sur ${modelUsed}. Vérifiez votre clé ou activez la facturation sur aistudio.google.com.`;
+                }
+                return `Quota Google Gemini atteint sur ${modelUsed} (${rawMsg.slice(0, 120)}). Attendez 30 secondes ou vérifiez vos quotas sur aistudio.google.com.`;
+            }
+            if (status === 400 && rawMsg.toLowerCase().includes('api key')) {
+                return 'Clé API Gemini invalide. Vérifiez-la dans Paramètres.';
+            }
+            return rawMsg || `Erreur Gemini (${status})`;
+        }
+
+        async function getOrderedCandidateModels(cleanKey) {
+            const listedModels = await fetchAvailableGeminiModels(cleanKey);
+            const basePriority = [
+                state.cachedWorkingModel,
+                'gemini-2.5-flash',
+                'gemini-flash-latest',
+                'gemini-2.0-flash',
+                'gemini-2.0-flash-lite',
+                'gemini-2.5-flash-lite',
+                'gemini-2.5-pro'
+            ].filter(Boolean);
+
+            const ordered = [];
+            basePriority.forEach(m => {
+                if (!ordered.includes(m) && (listedModels.length === 0 || listedModels.includes(m))) {
+                    ordered.push(m);
+                }
+            });
+            listedModels.forEach(m => {
+                if (m.includes('flash') && !ordered.includes(m)) {
+                    ordered.push(m);
+                }
+            });
+            if (ordered.length === 0) {
+                ordered.push('gemini-2.5-flash', 'gemini-2.0-flash');
+            }
+            return ordered;
+        }
+
+        async function callGeminiApi(promptText, base64Image = null, mimeType = 'image/jpeg') {
+            const cleanKey = (state.apiKey || '').trim();
+            if (!cleanKey) throw new Error('Clé API manquante.');
+
+            const parts = [{ text: promptText }];
+            if (base64Image) {
+                parts.push({ inline_data: { mime_type: mimeType, data: base64Image } });
+            }
+
+            const modelsToTry = await getOrderedCandidateModels(cleanKey);
+            let lastError = null;
+
+            for (const model of modelsToTry) {
+                for (let attempt = 0; attempt < 2; attempt++) {
+                    const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${encodeURIComponent(cleanKey)}`;
+                    const res = await fetch(url, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            contents: [{ role: 'user', parts }],
+                            generationConfig: { temperature: 0.2 }
+                        })
+                    });
+
+                    if (res.ok) {
+                        const data = await res.json();
+                        const text = data?.candidates?.[0]?.content?.parts?.[0]?.text;
+                        if (!text) throw new Error('Réponse vide de Gemini.');
+                        state.cachedWorkingModel = model;
+                        saveState();
+                        return text;
+                    }
+
+                    const errJson = await res.json().catch(() => ({}));
+                    const rawMsg = errJson?.error?.message || '';
+                    lastError = new Error(formatGeminiApiError(res.status, errJson, model));
+
+                    if (res.status === 429 && !rawMsg.includes('limit: 0') && attempt === 0) {
+                        await sleepMs(2000);
+                        continue;
+                    }
+                    break;
+                }
+            }
+            throw lastError || new Error('Impossible de joindre Gemini.');
+        }
+
+        async function callGeminiChat(systemPrompt, conversationContents) {
+            const cleanKey = (state.apiKey || '').trim();
+            if (!cleanKey) throw new Error('Clé API manquante.');
+
+            const modelsToTry = await getOrderedCandidateModels(cleanKey);
+            let lastError = null;
+
+            for (const model of modelsToTry) {
+                for (let attempt = 0; attempt < 2; attempt++) {
+                    const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${encodeURIComponent(cleanKey)}`;
+                    const res = await fetch(url, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            system_instruction: { parts: [{ text: systemPrompt }] },
+                            contents: conversationContents,
+                            generationConfig: { temperature: 0.65 }
+                        })
+                    });
+
+                    if (res.ok) {
+                        const data = await res.json();
+                        const text = data?.candidates?.[0]?.content?.parts?.[0]?.text;
+                        if (!text) throw new Error('Réponse vide du Sommelier.');
+                        state.cachedWorkingModel = model;
+                        saveState();
+                        return text;
+                    }
+
+                    const errJson = await res.json().catch(() => ({}));
+                    const rawMsg = errJson?.error?.message || '';
+                    lastError = new Error(formatGeminiApiError(res.status, errJson, model));
+
+                    if (res.status === 429 && !rawMsg.includes('limit: 0') && attempt === 0) {
+                        await sleepMs(2000);
+                        continue;
+                    }
+                    break;
+                }
+            }
+            throw lastError || new Error('Impossible de joindre le Sommelier IA.');
+        }
+
+        // =========================================================================
+        // 13. EXPORT & IMPORT CSV EXCEL COMPLET
+        // =========================================================================
+        function csvEscape(val) {
+            const s = String(val ?? '').replace(/\r?\n/g, ' ');
+            return `"${s.replace(/"/g, '""')}"`;
+        }
+
+        function exportCellarToExcelCsv() {
+            const headers = [
+                'Cave', 'Nom du vin', 'Domaine', 'Millésime', 'Couleur', 'Format', 'Appellation',
+                'Quantité', 'Prix unitaire (€)', 'Valeur totale (€)', 'Note Parker',
+                'Note Vivino', 'Apogée début', 'Apogée fin', 'Statut Apogée', 'Ouverture conseillée', 'Notes personnelles'
+            ];
+
+            const rows = ['sep=;', headers.map(csvEscape).join(';')];
+
+            state.stockEntries.forEach(st => {
+                const qty = Number(st.quantity) || 0;
+                if (qty <= 0) return;
+                const w = state.wines.find(x => x.id === st.wineId);
+                if (!w) return;
+                const mat = getMaturityInfo(w);
+                const opening = getOpeningAdvice(w);
+                const price = Number(w.estimatedPrice) || 0;
+
+                rows.push([
+                    getCaveName(st.caveId),
+                    w.name,
+                    w.domain || '',
+                    w.vintage || '',
+                    w.color || 'Rouge',
+                    w.format || 'Bouteille',
+                    w.appellation || '',
+                    qty,
+                    price,
+                    qty * price,
+                    w.parkerScore || '',
+                    w.vivinoScore || '',
+                    w.drinkFrom || '',
+                    w.drinkTo || '',
+                    mat.label,
+                    opening.shortLabel,
+                    w.notes || ''
+                ].map(csvEscape).join(';'));
+            });
+
+            const bom = '\uFEFF';
+            const blob = new Blob([bom + rows.join('\r\n')], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            const dateStr = new Date().toISOString().slice(0, 10);
+            a.href = url;
+            a.download = `Vin_sur_Vin_Cave_${dateStr}.csv`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            showToast('Fichier Excel (.csv) téléchargé !');
+        }
+
+        function parseCsvLine(line, sep) {
+            const result = [];
+            let cur = '';
+            let inQuotes = false;
+            for (let i = 0; i < line.length; i++) {
+                const ch = line[i];
+                if (inQuotes) {
+                    if (ch === '"' && line[i + 1] === '"') {
+                        cur += '"';
+                        i++;
+                    } else if (ch === '"') {
+                        inQuotes = false;
+                    } else {
+                        cur += ch;
+                    }
+                } else {
+                    if (ch === '"') {
+                        inQuotes = true;
+                    } else if (ch === sep) {
+                        result.push(cur.trim());
+                        cur = '';
+                    } else {
+                        cur += ch;
+                    }
+                }
+            }
+            result.push(cur.trim());
+            return result;
+        }
+
+        function handleExcelCsvImport(event) {
+            const file = event.target.files && event.target.files[0];
+            event.target.value = '';
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                const buffer = e.target.result;
+                let text = new TextDecoder('utf-8').decode(buffer);
+                if (text.includes('\uFFFD')) {
+                    text = new TextDecoder('windows-1252').decode(buffer);
+                }
+
+                const rawLines = text.replace(/^\uFEFF/, '').split(/\r?\n/).filter(l => l.trim().length > 0);
+                const lines = rawLines[0] && /^sep=/i.test(rawLines[0].trim()) ? rawLines.slice(1) : rawLines;
+
+                if (lines.length < 2) {
+                    showToast('Fichier CSV vide ou invalide.');
+                    return;
+                }
+
+                const sep = lines[0].includes(';') ? ';' : ',';
+                const headers = parseCsvLine(lines[0], sep).map(h => h.toLowerCase());
+
+                const idxCave = headers.findIndex(h => h.includes('cave'));
+                const idxName = headers.findIndex(h => h.includes('nom'));
+                const idxDomain = headers.findIndex(h => h.includes('domaine'));
+                const idxVintage = headers.findIndex(h => h.includes('mill'));
+                const idxColor = headers.findIndex(h => h.includes('couleur'));
+                const idxFormat = headers.findIndex(h => h.includes('format'));
+                const idxApp = headers.findIndex(h => h.includes('appellation'));
+                const idxQty = headers.findIndex(h => h.includes('quant'));
+                const idxPrice = headers.findIndex(h => h.includes('prix'));
+                const idxParker = headers.findIndex(h => h.includes('parker'));
+                const idxVivino = headers.findIndex(h => h.includes('vivino'));
+                const idxFrom = headers.findIndex(h => h.includes('début') || h.includes('debut'));
+                const idxTo = headers.findIndex(h => h.includes('fin'));
+                const idxNotes = headers.findIndex(h => h.includes('notes'));
+
+                let importedBottles = 0;
+                for (let i = 1; i < lines.length; i++) {
+                    const cols = parseCsvLine(lines[i], sep);
+                    const name = idxName >= 0 ? cols[idxName] : cols[1];
+                    if (!name) continue;
+
+                    const caveLabel = (idxCave >= 0 ? cols[idxCave] : cols[0]) || 'Saint-Cloud';
+                    let cave = state.caves.find(c => c.name.toLowerCase() === caveLabel.toLowerCase());
+                    if (!cave) {
+                        cave = { id: 'cave_' + Date.now() + '_' + i, name: caveLabel, subtitle: 'Cave importée' };
+                        state.caves.push(cave);
+                    }
+
+                    const qty = Math.max(1, Number(idxQty >= 0 ? cols[idxQty] : 1) || 1);
+                    const vintage = Number(idxVintage >= 0 ? cols[idxVintage] : CURRENT_YEAR) || CURRENT_YEAR;
+                    const price = Math.max(0, Number(String(idxPrice >= 0 ? cols[idxPrice] : 0).replace(/[^\d.,]/g, '').replace(',', '.')) || 0);
+                    const rawFmt = idxFormat >= 0 ? (cols[idxFormat] || '') : '';
+                    const format = rawFmt.toLowerCase().includes('magnum') ? 'Magnum' : 'Bouteille';
+
+                    findOrCreateWineAndAddStock({
+                        name,
+                        domain: idxDomain >= 0 ? cols[idxDomain] : '',
+                        vintage,
+                        color: idxColor >= 0 ? cols[idxColor] : 'Rouge',
+                        format,
+                        appellation: idxApp >= 0 ? cols[idxApp] : '',
+                        estimatedPrice: price,
+                        parkerScore: idxParker >= 0 ? cols[idxParker] : '',
+                        vivinoScore: idxVivino >= 0 ? cols[idxVivino] : '',
+                        drinkFrom: Number(idxFrom >= 0 ? cols[idxFrom] : CURRENT_YEAR) || CURRENT_YEAR,
+                        drinkTo: Number(idxTo >= 0 ? cols[idxTo] : (CURRENT_YEAR + 8)) || (CURRENT_YEAR + 8),
+                        notes: idxNotes >= 0 ? cols[idxNotes] : '',
+                        photo: ''
+                    }, cave.id, qty, true);
+
+                    importedBottles += qty;
+                }
+
+                saveState();
+                closeModal();
+                renderApp();
+                showToast(`${importedBottles} bouteille${importedBottles > 1 ? 's' : ''} synchronisée${importedBottles > 1 ? 's' : ''} depuis le CSV !`);
+            };
+            reader.readAsArrayBuffer(file);
+        }
+
+        // =========================================================================
+        // 14. INITIALISATION AU CHARGEMENT
+        // =========================================================================
+        renderApp();
+
+        (async function hydrateFromIndexedDB() {
+            const savedIdb = await readFromIndexedDB();
+            if (savedIdb && typeof savedIdb === 'object') {
+                state = normalizeLoadedState(savedIdb);
+                renderApp();
+            } else {
+                saveState();
+            }
+        })();
+    </script>
+</body>
+</html>
